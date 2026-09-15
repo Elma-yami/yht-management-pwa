@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#1F2937">
+  <meta name="description" content="YHT 수주 / 납품 / 정산 통합관리">
+  <link rel="manifest" href="./manifest.json">
+  <link rel="icon" href="./icons/icon-192.png">
+  <title>YHT 관리장부</title>
+  <style>
+    * { box-sizing:border-box; }
+    html, body { margin:0; width:100%; height:100%; background:#f3f4f6; }
+    body { font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI","Malgun Gothic",sans-serif; overflow:hidden; }
+    #app { width:100%; height:100%; position:relative; }
+    iframe { border:0; width:100%; height:100%; display:block; background:#fff; }
+    #offline {
+      display:none; position:absolute; inset:0; z-index:10;
+      align-items:center; justify-content:center; text-align:center;
+      padding:24px; background:#f3f4f6;
+    }
+    #offline .box { max-width:420px; background:#fff; padding:28px; border-radius:18px; box-shadow:0 8px 30px rgba(0,0,0,.10); }
+    #offline h2 { margin:0 0 10px; }
+    #offline p { color:#4b5563; line-height:1.6; }
+    #retry { border:0; border-radius:10px; padding:11px 18px; cursor:pointer; font-weight:700; background:#1F2937; color:#fff; }
+    @media (max-width:600px) {
+      body { background:#fff; }
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+  <iframe id="yht" src="https://script.google.com/macros/s/AKfycbxRkZb7qNPF88_W73d8OeZQDJWzZndt5kP80LSY4FrXISjQFoK3ylMw0WUBR2uYUaam/exec" title="YHT 관리장부" allow="clipboard-read; clipboard-write"></iframe>
+  <div id="offline">
+    <div class="box">
+      <h2>YHT 관리장부</h2>
+      <p>인터넷 연결이 필요합니다.<br>연결 후 다시 시도해 주세요.</p>
+      <button id="retry">다시 연결</button>
+    </div>
+  </div>
+</div>
+<script>
+  const iframe = document.getElementById('yht');
+  const offline = document.getElementById('offline');
+  function updateNetwork() {
+    offline.style.display = navigator.onLine ? 'none' : 'flex';
+  }
+  window.addEventListener('online', updateNetwork);
+  window.addEventListener('offline', updateNetwork);
+  document.getElementById('retry').addEventListener('click', () => {
+    offline.style.display = 'none';
+    iframe.src = iframe.src;
+  });
+  updateNetwork();
+
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => navigator.serviceWorker.register('./service-worker.js').catch(console.error));
+  }
+</script>
+</body>
+</html>
