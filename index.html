@@ -1,5 +1,8 @@
-```html
-<!DOCTYPE html>
+from pathlib import Path
+
+out = Path("/mnt/data/YHT_PWA_index_앱내부실행.html")
+
+html = r'''<!DOCTYPE html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
@@ -15,221 +18,276 @@
 
   <link rel="manifest" href="./manifest.json">
   <link rel="icon" href="./icons/icon-192.png">
+  <link rel="apple-touch-icon" href="./icons/icon-192.png">
+
+  <style>
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      font-family: Arial, 'Noto Sans KR', sans-serif;
+      background: #f5f6f8;
+    }
+
+    #launcher {
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 420px;
+      background: white;
+      border-radius: 20px;
+      padding: 35px 25px;
+      box-sizing: border-box;
+      text-align: center;
+      box-shadow: 0 8px 30px rgba(0,0,0,.08);
+    }
+
+    .main-button, .external-button {
+      display: block;
+      box-sizing: border-box;
+      width: 100%;
+      padding: 16px;
+      border-radius: 12px;
+      color: white;
+      text-decoration: none;
+      font-size: 17px;
+      font-weight: bold;
+      border: 0;
+      cursor: pointer;
+    }
+
+    .main-button { background: #111; }
+    .external-button {
+      display: none;
+      margin-top: 12px;
+      background: #4285f4;
+    }
+
+    #kakaoGuide {
+      display: none;
+      margin-top: 20px;
+      padding: 18px;
+      border-radius: 14px;
+      background: #fff7d6;
+      color: #444;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    #installButton {
+      display: none;
+      width: 100%;
+      margin-top: 12px;
+      padding: 14px;
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      background: white;
+      font-size: 15px;
+      cursor: pointer;
+    }
+
+    #appView {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: white;
+      z-index: 1000;
+    }
+
+    #appToolbar {
+      height: 48px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 12px;
+      box-sizing: border-box;
+      background: #111;
+      color: white;
+    }
+
+    #backButton {
+      border: 0;
+      background: transparent;
+      color: white;
+      font-size: 15px;
+      cursor: pointer;
+      padding: 8px;
+    }
+
+    #appTitle {
+      font-weight: bold;
+      font-size: 15px;
+    }
+
+    #ledgerFrame {
+      width: 100%;
+      height: calc(100% - 48px);
+      border: 0;
+      display: block;
+      background: white;
+    }
+
+    @media (display-mode: standalone) {
+      #appToolbar {
+        padding-top: env(safe-area-inset-top);
+        height: calc(48px + env(safe-area-inset-top));
+      }
+
+      #ledgerFrame {
+        height: calc(100% - 48px - env(safe-area-inset-top));
+      }
+    }
+  </style>
 </head>
 
-<body style="
-  margin:0;
-  min-height:100vh;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  background:#f5f6f8;
-  font-family:Arial,'Noto Sans KR',sans-serif;
-">
+<body>
 
-  <div style="
-    width:calc(100% - 40px);
-    max-width:420px;
-    background:white;
-    border-radius:20px;
-    padding:35px 25px;
-    box-sizing:border-box;
-    text-align:center;
-    box-shadow:0 8px 30px rgba(0,0,0,.08);
-  ">
+  <div id="launcher">
+    <div class="card">
+      <h1 style="margin:0 0 10px;font-size:28px;">YHT 관리장부</h1>
 
-    <h1 style="margin:0 0 10px;font-size:28px;">
-      YHT 관리장부
-    </h1>
+      <p style="margin:0 0 30px;color:#666;font-size:15px;">
+        YHT 수주 / 납품 / 정산 통합관리
+      </p>
 
-    <p style="margin:0 0 30px;color:#666;font-size:15px;">
-      YHT 수주 / 납품 / 정산 통합관리
-    </p>
+      <button id="openLedger" class="main-button" type="button">
+        YHT 관리장부 열기
+      </button>
 
-    <!-- 일반 브라우저용 -->
-    <a
-      id="openLedger"
-      href="https://script.google.com/macros/s/AKfycbxRkZb7qNPF88_W73d8OeZQDJWzZndt5kP80LSY4FrXISjQFoK3ylMw0WUBR2uYUaam/exec"
-      target="_blank"
-      rel="noopener"
-      style="
-        display:block;
-        box-sizing:border-box;
-        width:100%;
-        padding:16px;
-        border-radius:12px;
-        background:#111;
-        color:white;
-        text-decoration:none;
-        font-size:17px;
-        font-weight:bold;
-      "
-    >
-      YHT 관리장부 열기
-    </a>
+      <div id="kakaoGuide">
+        <strong>카카오톡에서는 외부 브라우저로 실행합니다.</strong>
+        <br>
+        아래 버튼을 눌러 Chrome에서 열어주세요.
+      </div>
 
-    <!-- 카카오톡 인앱 브라우저에서만 표시 -->
-    <div
-      id="kakaoGuide"
-      style="
-        display:none;
-        margin-top:20px;
-        padding:18px;
-        border-radius:14px;
-        background:#fff7d6;
-        color:#444;
-        font-size:14px;
-        line-height:1.6;
-      "
-    >
-      <strong>📱 카카오톡에서는 바로 열리지 않을 수 있습니다.</strong>
-      <br>
-      아래 버튼을 눌러 외부 브라우저에서 열어주세요.
+      <a id="chromeButton" class="external-button" href="#">
+        Chrome에서 YHT 관리장부 열기
+      </a>
+
+      <button id="installButton" type="button">
+        앱으로 설치하기
+      </button>
     </div>
-
-    <a
-      id="chromeButton"
-      href="#"
-      style="
-        display:none;
-        box-sizing:border-box;
-        width:100%;
-        margin-top:12px;
-        padding:15px;
-        border-radius:12px;
-        background:#4285f4;
-        color:white;
-        text-decoration:none;
-        font-size:16px;
-        font-weight:bold;
-      "
-    >
-      🌐 Chrome에서 YHT 관리장부 열기
-    </a>
-
-    <!-- PWA 설치 버튼 -->
-    <button
-      id="installButton"
-      style="
-        display:none;
-        width:100%;
-        margin-top:12px;
-        padding:14px;
-        border:1px solid #ddd;
-        border-radius:12px;
-        background:white;
-        font-size:15px;
-        cursor:pointer;
-      "
-    >
-      📱 앱으로 설치하기
-    </button>
-
   </div>
 
+  <!-- 설치된 PWA/일반 브라우저에서 관리장부를 앱 내부에 표시 -->
+  <section id="appView">
+    <div id="appToolbar">
+      <button id="backButton" type="button">← 시작 화면</button>
+      <span id="appTitle">YHT 관리장부</span>
+    </div>
+
+    <iframe
+      id="ledgerFrame"
+      title="YHT 관리장부"
+      src="about:blank"
+      allow="clipboard-read; clipboard-write"
+    ></iframe>
+  </section>
+
 <script>
+(function () {
+  "use strict";
+
   const APP_URL =
     "https://script.google.com/macros/s/AKfycbxRkZb7qNPF88_W73d8OeZQDJWzZndt5kP80LSY4FrXISjQFoK3ylMw0WUBR2uYUaam/exec";
 
-  const ua = navigator.userAgent || navigator.vendor || window.opera;
-
-  // 카카오톡 인앱 브라우저 감지
-  const isKakaoTalk =
-    /KAKAOTALK/i.test(ua) ||
-    /KakaoTalk/i.test(ua);
-
-  // Android인지 확인
+  const ua = navigator.userAgent || "";
+  const isKakaoTalk = /KAKAOTALK/i.test(ua);
   const isAndroid = /Android/i.test(ua);
+  const isIOS = /iPhone|iPad|iPod/i.test(ua);
 
-  // iPhone/iPad인지 확인
-  const isIOS =
-    /iPhone|iPad|iPod/i.test(ua);
-
+  const launcher = document.getElementById("launcher");
+  const appView = document.getElementById("appView");
+  const ledgerFrame = document.getElementById("ledgerFrame");
+  const openLedger = document.getElementById("openLedger");
+  const backButton = document.getElementById("backButton");
   const guide = document.getElementById("kakaoGuide");
   const chromeButton = document.getElementById("chromeButton");
-  const openLedger = document.getElementById("openLedger");
+  const installButton = document.getElementById("installButton");
+
+  function openInsideApp() {
+    ledgerFrame.src = APP_URL;
+    launcher.style.display = "none";
+    appView.style.display = "block";
+  }
+
+  function closeInsideApp() {
+    ledgerFrame.src = "about:blank";
+    appView.style.display = "none";
+    launcher.style.display = "flex";
+  }
 
   if (isKakaoTalk) {
-
+    openLedger.style.display = "none";
     guide.style.display = "block";
     chromeButton.style.display = "block";
 
-    /*
-      Android:
-      Chrome 앱으로 직접 열도록 intent URL 사용
-    */
     if (isAndroid) {
-
-      const intentUrl =
+      chromeButton.href =
         "intent://script.google.com/macros/s/AKfycbxRkZb7qNPF88_W73d8OeZQDJWzZndt5kP80LSY4FrXISjQFoK3ylMw0WUBR2uYUaam/exec" +
         "#Intent;scheme=https;package=com.android.chrome;end";
-
-      chromeButton.href = intentUrl;
-
     } else if (isIOS) {
-
-      /*
-        iPhone:
-        Chrome가 설치되어 있으면 Chrome으로 열기 시도
-      */
-      const chromeUrl =
-        "googlechrome://navigate?url=" +
-        encodeURIComponent(APP_URL);
-
-      chromeButton.href = chromeUrl;
-
+      chromeButton.href =
+        "googlechrome://navigate?url=" + encodeURIComponent(APP_URL);
     } else {
-
-      /*
-        기타 환경
-      */
       chromeButton.href = APP_URL;
     }
-
-    // 카카오톡에서는 기본 버튼 대신 외부 브라우저 버튼 사용
-    openLedger.style.display = "none";
+  } else {
+    openLedger.addEventListener("click", openInsideApp);
   }
 
-  // PWA 설치
-  let deferredPrompt;
+  backButton.addEventListener("click", closeInsideApp);
 
-  window.addEventListener("beforeinstallprompt", (e) => {
-    e.preventDefault();
-    deferredPrompt = e;
+  let deferredPrompt = null;
 
-    const installButton =
-      document.getElementById("installButton");
-
+  window.addEventListener("beforeinstallprompt", function (event) {
+    event.preventDefault();
+    deferredPrompt = event;
     installButton.style.display = "block";
-
-    installButton.addEventListener("click", async () => {
-
-      if (!deferredPrompt) return;
-
-      deferredPrompt.prompt();
-
-      const { outcome } =
-        await deferredPrompt.userChoice;
-
-      deferredPrompt = null;
-
-      if (outcome === "accepted") {
-        installButton.style.display = "none";
-      }
-    });
   });
 
-  // 서비스 워커
+  installButton.addEventListener("click", async function () {
+    if (!deferredPrompt) return;
+
+    deferredPrompt.prompt();
+
+    try {
+      const result = await deferredPrompt.userChoice;
+      if (result.outcome === "accepted") {
+        installButton.style.display = "none";
+      }
+    } finally {
+      deferredPrompt = null;
+    }
+  });
+
+  window.addEventListener("appinstalled", function () {
+    installButton.style.display = "none";
+    deferredPrompt = null;
+  });
+
   if ("serviceWorker" in navigator) {
-    window.addEventListener("load", () => {
+    window.addEventListener("load", function () {
       navigator.serviceWorker.register("./service-worker.js")
-        .catch(err => {
-          console.log("Service Worker 등록 실패:", err);
+        .catch(function (error) {
+          console.warn("Service Worker 등록 실패:", error);
         });
     });
   }
+})();
 </script>
 
 </body>
 </html>
-```
+'''
+
+out.write_text(html, encoding="utf-8")
+print(out)
