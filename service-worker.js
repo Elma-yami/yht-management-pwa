@@ -1,4 +1,4 @@
-const CACHE = 'yht-pwa-v4';
+const CACHE = 'yht-pwa-v5';
 
 const STATIC_FILES = [
   './manifest.json',
@@ -32,12 +32,20 @@ self.addEventListener('fetch', event => {
   const request = event.request;
   const url = new URL(request.url);
 
-  // 다른 사이트(Google Apps Script 등)는 건드리지 않음
+  // 다른 사이트 요청은 Service Worker가 건드리지 않음
   if (url.origin !== self.location.origin) {
     return;
   }
 
-  // 메인 화면(index)은 항상 최신 버전을 인터넷에서 가져옴
+  // API 요청 및 POST 요청은 캐시하지 않고 그대로 통과
+  if (
+    request.method !== 'GET' ||
+    url.pathname.startsWith('/api/')
+  ) {
+    return;
+  }
+
+  // 메인 화면은 항상 최신 버전을 인터넷에서 가져옴
   if (
     url.pathname === '/' ||
     url.pathname.endsWith('/index.html')
@@ -46,7 +54,7 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // 아이콘/manifest 등 정적 파일만 캐시 사용
+  // manifest / 아이콘 등 정적 파일만 캐시 사용
   event.respondWith(
     caches.match(request).then(cached => {
       if (cached) {
