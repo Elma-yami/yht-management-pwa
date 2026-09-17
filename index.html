@@ -73,7 +73,6 @@
   table.agg th, table.agg td { padding: 7px 9px; border-bottom: 1px solid var(--line); text-align: right; }
   table.agg th:first-child, table.agg td:first-child { text-align: left; }
   table.agg thead th { background: #FAFAF7; color: var(--sub); font-size: 11.5px; }
-
   /* ===== YHT 프로그램형 UI v2 ===== */
   body { padding:0; background:#F3F4F6; }
   .app-shell { min-height:100vh; display:flex; }
@@ -146,9 +145,7 @@
     </div>
   </div>
 </div>
-
 <div class="toast" id="toast"></div>
-
 <div class="modal-overlay" id="addModal">
   <div class="modal-box">
     <div class="modal-title" id="addModalTitle">➕ 새 건 등록</div>
@@ -179,7 +176,6 @@
     </div>
   </div>
 </div>
-
 <div class="modal-overlay" id="pasteModal">
   <div class="modal-box">
     <div class="modal-title">📋 붙여넣기로 등록</div>
@@ -196,7 +192,6 @@
     </div>
   </div>
 </div>
-
 <script>
 /* Cloudflare Pages PWA -> Apps Script API bridge (v1.0-stable) */
 (() => {
@@ -233,10 +228,8 @@
   window.google.script = window.google.script || {};
   window.google.script.run = makeRunner(null, null);
 })();
-
 // Excel export library is loaded when the user exports a workbook.
 </script>
-
 <script>
 let DATA = { mt: [], gas: [] };
 let IS_OWNER = false;
@@ -249,7 +242,6 @@ const tabState = {
 };
 let selected = { mt: new Set(), gas: new Set() };
 let currentTab = "dashboard";
-
 function esc(s) {
   if (s === null || s === undefined) return "";
   return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
@@ -286,7 +278,6 @@ function showToast(msg, linkUrl) {
   clearTimeout(window._tt);
   window._tt = setTimeout(() => t.style.display = "none", linkUrl ? 15000 : 6000);
 }
-
 let xlsxLoadPromise = null;
 function ensureXlsx() {
   if (window.XLSX && window.XLSX.utils) return Promise.resolve();
@@ -301,7 +292,6 @@ function ensureXlsx() {
   }
   return xlsxLoadPromise;
 }
-
 async function exportExcel(mode) {
   const category = document.getElementById("exportCategorySelect").value; // "all" | "mt" | "gas"
   const showGubunCol = category === "all";
@@ -335,7 +325,6 @@ async function exportExcel(mode) {
   XLSX.writeFile(wb, `YHT_${categoryLabel}${sheetTitle}_${TODAY || ""}.xlsx`);
   showToast(`${sheetTitle} ${count}건을 엑셀로 내보냈습니다`);
 }
-
 function loadData() {
   google.script.run.withSuccessHandler((res) => {
     DATA.mt = res.mt; DATA.gas = res.gas;
@@ -356,7 +345,6 @@ function loadData() {
     showToast("장부를 불러오지 못했습니다: " + e.message);
   }).getAllData(ADMIN_PW);
 }
-
 function updateRoleBadge() {
   const badge = document.getElementById("roleBadge");
   badge.textContent = IS_OWNER ? "✏️ 편집 가능 (잠그기)" : "🔒 보기 전용 (관리자 모드)";
@@ -365,7 +353,6 @@ function updateRoleBadge() {
   badge.onclick = toggleAdminMode;
   document.getElementById("importSettlementBtn").style.display = IS_OWNER ? "inline-flex" : "none";
 }
-
 function toggleAdminMode() {
   if (IS_OWNER) {
     if (!confirm("편집 모드를 잠글까요? (다시 켜려면 비밀번호를 입력해야 해요)")) return;
@@ -392,14 +379,11 @@ function toggleAdminMode() {
     fetchPriceItems().catch(() => {});
   }).withFailureHandler((e) => showToast("오류: " + e.message)).checkAdminPassword(pw);
 }
-
 let DASHBOARD_YEAR = "all";
-
 function setDashboardYear(year) {
   DASHBOARD_YEAR = year;
   renderStats();
 }
-
 function renderStats() {
   const allRows = [...DATA.mt, ...DATA.gas];
   const years = [...new Set(allRows.map(r => String(r.orderDate || "").slice(0, 4)).filter(y => /^\d{4}$/.test(y)))].sort().reverse();
@@ -418,7 +402,6 @@ function renderStats() {
   if (stats) stats.innerHTML = `<div class="stat"><div class="label">전체</div><div class="value">${all.length}</div></div><div class="stat"><div class="label">미정산</div><div class="value">${unsettled.length}</div></div>`;
   renderDashboard({all,done,unsettled,inprogress,totalAmount,doneAmount,settleAmount,mtRows,gasRows,years});
 }
-
 function renderDashboard(m) {
   const el = document.getElementById("tab-dashboard");
   if (!el) return;
@@ -484,7 +467,6 @@ function renderDashboard(m) {
       </div>
     </div>`;
 }
-
 function switchTab(tab) {
   currentTab = tab;
   document.querySelectorAll('.nav-btn[data-tab]').forEach(x=>x.classList.toggle('active',x.dataset.tab===tab));
@@ -494,7 +476,6 @@ function switchTab(tab) {
   const title=document.getElementById('pageTitle'); if(title) title.textContent=titles[tab]||tab;
   if(tab==='mt') renderTab('mt'); if(tab==='gas') renderTab('gas'); if(tab==='monthly') renderMonthly();
 }
-
 function visibleRows(key) {
   const st = tabState[key];
   let r = DATA[key];
@@ -507,7 +488,6 @@ function visibleRows(key) {
   if (st.filterMode === "unsettled") r = r.filter(x => x.status === "완료" && x.billing !== "완료");
   return r;
 }
-
 function monthSelectHtml(key, rowsForCount) {
   const groups = {};
   rowsForCount.forEach(r => { const k = monthKeyOf(r); groups[k] = (groups[k]||0)+1; });
@@ -517,7 +497,6 @@ function monthSelectHtml(key, rowsForCount) {
   keys.forEach(k => { opts += `<option value="${esc(k)}" ${st.month===k?"selected":""}>${monthLabel(k)} (${groups[k]}건)</option>`; });
   return `<select onchange="setMonth('${key}', this.value)">${opts}</select>`;
 }
-
 function setMonth(key, v) { tabState[key].month = v; renderTab(key); }
 function setFilter(key, v) { tabState[key].filterMode = v; renderTab(key); }
 function setSearch(key, v) { tabState[key].search = v; renderTab(key); }
@@ -526,7 +505,6 @@ function toggleSelect(key, rowIndex) {
   if (s.has(rowIndex)) s.delete(rowIndex); else s.add(rowIndex);
   renderTab(key);
 }
-
 function cardHtml(key, r) {
   const flagged = isOverdue(r), pending = isPending(r);
   const cls = flagged ? "flagged" : pending ? "pending" : "";
@@ -550,7 +528,6 @@ function cardHtml(key, r) {
   if (r.status === "완료" && r.doneDate) { deliveryLabel = `납품완료 ${esc(r.doneDate)}`; deliveryColor = "#3F7355"; }
   else if (r.dueDate) { deliveryLabel = `납품예정 ${esc(r.dueDate)}`; deliveryColor = "#3E6E8E"; }
   else { deliveryLabel = "일정 미정"; deliveryColor = "#8A7A4E"; }
-
   return `<div class="card ${cls}">
     <div>${checkbox}</div>
     <div style="flex:1;min-width:0">
@@ -572,7 +549,6 @@ function cardHtml(key, r) {
     </div>
   </div>`;
 }
-
 function renderTab(key) {
   const st = tabState[key];
   const allVisible = visibleRows(key);
@@ -581,7 +557,6 @@ function renderTab(key) {
   filtered.forEach(r => { const k = monthKeyOf(r); (groups[k] = groups[k]||[]).push(r); });
   const keys = Object.keys(groups).sort().reverse();
   const body = keys.map(k => `<div class="month-header">${monthLabel(k)} (${groups[k].length}건)</div>` + groups[k].map(r=>cardHtml(key,r)).join("")).join("");
-
   const filters = [["all","전체"],["inprogress","진행중만"],["done","납품완료만"],["unsettled","미정산만"]];
   const filterHtml = filters.map(([id,label]) => `<button class="filter-btn ${st.filterMode===id?'active':''}" onclick="setFilter('${key}','${id}')">${label}</button>`).join("");
   const selCount = selected[key].size;
@@ -593,7 +568,6 @@ function renderTab(key) {
     <button class="bulk-btn" style="background:var(--steel)" onclick="openAddModal('${key}')">➕ 새 건 등록</button>
     <button class="bulk-btn" style="background:#6B5B95" onclick="openPasteModal('${key}')">📋 붙여넣기로 등록</button>
   ` : "";
-
   document.getElementById("tab-" + key).innerHTML = `
     <div class="panel">
       <div class="toolbar">
@@ -611,7 +585,6 @@ function renderTab(key) {
     </div>
   `;
 }
-
 function renderMonthly() {
   function block(key, label) {
     const buckets = {}; // "YYYY-MM" -> {order,done,settle}
@@ -624,7 +597,6 @@ function renderMonthly() {
         if (r.billing === "완료") buckets[m].settle += amt;
       }
     });
-
     // 연도별 합계 집계
     const yearTotals = {}; // "YYYY" -> {order,done,settle}
     Object.keys(buckets).forEach(m => {
@@ -635,7 +607,6 @@ function renderMonthly() {
       yearTotals[y].settle += buckets[m].settle;
     });
     const years = Object.keys(yearTotals).sort().reverse();
-
     const yearCards = years.map(y => `
       <div style="flex:1;min-width:180px;background:#FAFAF7;border:1px solid var(--line);border-radius:8px;padding:10px 12px">
         <div style="font-size:13px;font-weight:700;margin-bottom:6px">${y}년 합계</div>
@@ -643,7 +614,6 @@ function renderMonthly() {
         <div style="font-size:11.5px;color:var(--sub);display:flex;justify-content:space-between"><span>납품완료</span><b style="color:var(--ink);font-size:13px">${won(yearTotals[y].done)}</b></div>
         <div style="font-size:11.5px;color:var(--sub);display:flex;justify-content:space-between"><span>정산완료</span><b style="color:var(--ink);font-size:13px">${won(yearTotals[y].settle)}</b></div>
       </div>`).join("");
-
     // 월별 표는 연도 구분선을 넣어서 표시
     const monthKeys = Object.keys(buckets).sort().reverse();
     let lastYear = null;
@@ -653,7 +623,6 @@ function renderMonthly() {
       lastYear = y;
       return yearDivider + `<tr><td>${monthLabel(k)}</td><td>${won(buckets[k].order)}</td><td>${won(buckets[k].done)}</td><td>${won(buckets[k].settle)}</td></tr>`;
     }).join("");
-
     return `<div style="margin-bottom:22px">
       <div style="font-weight:700;margin-bottom:8px;font-size:14px">${label}</div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px">${yearCards || '<div class="empty">데이터 없음</div>'}</div>
@@ -663,7 +632,6 @@ function renderMonthly() {
   }
   document.getElementById("tab-monthly").innerHTML = `<div class="panel" style="padding:16px">${block("mt","유지보수")}${block("gas","국소배기(신규납품)")}</div>`;
 }
-
 function doUndoComplete(key) {
   const ids = [...selected[key]];
   if (!ids.length) return;
@@ -732,14 +700,11 @@ function doBulkSettle(key) {
     showToast(`${ids.length}건 정산완료 처리했습니다`);
   }).withFailureHandler((e) => showToast("오류: " + e.message)).bulkSettle(key, ids, ADMIN_PW);
 }
-
 const HEADER_KEYWORDS = ["의뢰번호","VUD","라인","공정","설비호기","제품","수량","담당자","품목","자재발주","수주","단가","합계","비고","관리번호","PO","납품"];
 const DEFAULT_PASTE_ORDER = ["id","vud","line","process","eqp","sn","item","qty","owner","orderDate"];
-
 function looksLikeHeaderRow_(cells) {
   return cells.filter(c => HEADER_KEYWORDS.some(k => c.includes(k))).length >= 2;
 }
-
 function parsePasteText(text) {
   const lines = text.split(/\r?\n/).map(l => l.replace(/\r/g,"")).filter(l => l.trim() !== "");
   if (!lines.length) return [];
@@ -750,7 +715,6 @@ function parsePasteText(text) {
   };
   const normalizeHeader = (s) => s.replace(/\s|\(|\)|\[|\]|\//g, "").toLowerCase();
   const firstCells = splitCells(lines[0]);
-
   let fieldNames, dataLines;
   if (looksLikeHeaderRow_(firstCells)) {
     const headerMap = {
@@ -777,7 +741,6 @@ function parsePasteText(text) {
     fieldNames = DEFAULT_PASTE_ORDER;
     dataLines = lines;
   }
-
   const results = [];
   dataLines.forEach((line) => {
     const cells = splitCells(line);
@@ -794,7 +757,6 @@ function parsePasteText(text) {
   });
   return results;
 }
-
 function openPasteModal(key) {
   document.getElementById("pasteArea").value = "";
   document.getElementById("pasteModal").dataset.key = key;
@@ -813,13 +775,11 @@ function submitPasteModal() {
     showToast(`${rows.length}건 등록했습니다`);
   }).withFailureHandler((e) => showToast("오류: " + e.message)).addRowsBulk(key, rows, ADMIN_PW);
 }
-
 let editState = null; // { key, rowIndex, original } — null이면 새 건 등록 모드
 let priceFromTable = false;
 let PRICE_ITEMS = null;
 let priceItemsLoadedAt = 0;
 let priceItemsPromise = null;
-
 function fetchPriceItems() {
   if (PRICE_ITEMS && Date.now() - priceItemsLoadedAt < 60000) return Promise.resolve(PRICE_ITEMS);
   if (!priceItemsPromise) {
@@ -833,7 +793,6 @@ function fetchPriceItems() {
   }
   return priceItemsPromise;
 }
-
 function renderPriceChoices(items) {
   const select = document.getElementById("f_itemSelect");
   const chosen = select.value;
@@ -846,7 +805,6 @@ function renderPriceChoices(items) {
   select.value = items.some(x => x.item === chosen) ? chosen : "";
   select.disabled = false;
 }
-
 function loadPriceChoices() {
   const select = document.getElementById("f_itemSelect");
   select.value = "";
@@ -862,7 +820,6 @@ function loadPriceChoices() {
     showToast("단가표 오류: " + e.message);
   });
 }
-
 document.getElementById("f_itemSelect").onchange = (e) => {
   const select = e.target;
   if (!select.value) return;
@@ -878,7 +835,6 @@ document.getElementById("f_item").oninput = () => {
   document.getElementById("f_price").value = "";
 };
 document.getElementById("f_price").oninput = () => { priceFromTable = false; };
-
 function openAddModal(defaultKey) {
   editState = null;
   priceFromTable = false;
@@ -894,7 +850,6 @@ function openAddModal(defaultKey) {
   document.getElementById("addModal").classList.add("open");
   loadPriceChoices();
 }
-
 function openEditModal(key, rowIndex) {
   const row = DATA[key].find(r => r.rowIndex === rowIndex);
   if (!row) return;
@@ -919,9 +874,7 @@ function openEditModal(key, rowIndex) {
   document.getElementById("addModal").classList.add("open");
   loadPriceChoices();
 }
-
 function closeAddModal() { document.getElementById("addModal").classList.remove("open"); }
-
 function submitAdd() {
   const key = editState ? editState.key : document.getElementById("f_gubun").value;
   const data = {
@@ -962,12 +915,10 @@ function submitAdd() {
     }).withFailureHandler((e) => showToast("오류: " + e.message)).addRow(key, data, ADMIN_PW);
   }
 }
-
 document.getElementById("cancelAddBtn").onclick = closeAddModal;
 document.getElementById("submitAddBtn").onclick = submitAdd;
 document.getElementById("cancelPasteBtn").onclick = closePasteModal;
 document.getElementById("submitPasteBtn").onclick = submitPasteModal;
-
 const settlementFileInput = document.createElement("input");
 settlementFileInput.type = "file";
 settlementFileInput.accept = ".xlsx,.xls";
@@ -990,10 +941,8 @@ settlementFileInput.onchange = (e) => {
   reader.readAsDataURL(file);
   settlementFileInput.value = "";
 };
-
 document.querySelectorAll(".nav-btn[data-tab]").forEach(b => { b.onclick = () => switchTab(b.dataset.tab); });
 document.getElementById("roleBadge").onclick = toggleAdminMode;
-
 loadData();
 </script>
 </body>
