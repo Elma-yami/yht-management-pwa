@@ -1,9 +1,16 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
 <base target="_top">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YHT 관리장부</title>
+<meta name="theme-color" content="#3E6E8E">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="YHT 관리장부">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
 <style>
   :root {
     --bg: #F2F1EC; --panel: #FFFFFF; --ink: #22262B; --sub: #6B7280; --line: #E4E2DA;
@@ -1000,6 +1007,9 @@ document.querySelectorAll(".nav-btn[data-tab]").forEach(b => { b.onclick = () =>
 document.getElementById("roleBadge").onclick = toggleAdminMode;
 
 loadData();
+if ('serviceWorker' in navigator && location.protocol === 'https:') {
+  window.addEventListener('load', () => navigator.serviceWorker.register('/service-worker.js').catch(() => {}));
+}
 </script>
 </body>
 </html>
