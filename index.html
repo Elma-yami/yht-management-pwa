@@ -433,10 +433,34 @@ async function exportExcel(mode) {
   showToast(`${sheetTitle} ${count}건을 엑셀로 내보냈습니다`);
 }
 
+const SNAPSHOT_KEY = "yht_session_snapshot_v1";
+let snapshotVerified = false;
+function saveSessionSnapshot() {
+  if (!snapshotVerified) return;
+  try {
+    sessionStorage.setItem(SNAPSHOT_KEY, JSON.stringify({ savedAt: Date.now(), mt: DATA.mt, gas: DATA.gas, todayStr: TODAY }));
+  } catch (_) { /* 저장 공간이 부족해도 서버 조회는 계속됩니다. */ }
+}
+function showSessionSnapshot() {
+  try {
+    const cached = JSON.parse(sessionStorage.getItem(SNAPSHOT_KEY) || "null");
+    if (!cached || Date.now() - cached.savedAt > 30 * 60 * 1000 || !Array.isArray(cached.mt) || !Array.isArray(cached.gas)) return false;
+    DATA.mt = cached.mt; DATA.gas = cached.gas; TODAY = cached.todayStr || "";
+    IS_OWNER = false; snapshotVerified = false;
+    renderStats(); switchTab(currentTab || "dashboard");
+    const badge = document.getElementById("roleBadge");
+    badge.textContent = "이전 데이터 표시 · 최신 정보 확인 중";
+    badge.className = "badge-role badge-viewer";
+    badge.onclick = null;
+    return true;
+  } catch (_) { return false; }
+}
 function loadData() {
+  const hadSnapshot = showSessionSnapshot();
   google.script.run.withSuccessHandler((res) => {
     DATA.mt = res.mt; DATA.gas = res.gas;
     IS_OWNER = res.isOwner; TODAY = res.todayStr;
+    snapshotVerified = true;
     if (!IS_OWNER && ADMIN_PW) {
       // 저장해둔 비밀번호가 더 이상 유효하지 않음 (비밀번호가 바뀐 경우 등) → 정리
       ADMIN_PW = "";
@@ -444,11 +468,11 @@ function loadData() {
     }
     updateRoleBadge();
     renderStats();
-    switchTab("dashboard");
+    switchTab(currentTab || "dashboard");
     if (IS_OWNER) fetchPriceItems().catch(() => {});
   }).withFailureHandler((e) => {
     const badge = document.getElementById("roleBadge");
-    badge.textContent = "불러오기 실패 · 다시 시도";
+    badge.textContent = hadSnapshot ? "연결 실패 · 이전 데이터 · 다시 시도" : "불러오기 실패 · 다시 시도";
     badge.onclick = loadData;
     showToast("장부를 불러오지 못했습니다: " + e.message);
   }).getAllData(ADMIN_PW);
@@ -498,6 +522,7 @@ function setDashboardYear(year) {
 }
 
 function renderStats() {
+  saveSessionSnapshot();
   const allRows = [...DATA.mt, ...DATA.gas];
   const years = [...new Set(allRows.map(r => String(r.orderDate || "").slice(0, 4)).filter(y => /^\d{4}$/.test(y)))].sort().reverse();
   if (DASHBOARD_YEAR !== "all" && !years.includes(DASHBOARD_YEAR)) DASHBOARD_YEAR = "all";
