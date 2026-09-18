@@ -80,6 +80,7 @@
   table.agg th, table.agg td { padding: 7px 9px; border-bottom: 1px solid var(--line); text-align: right; }
   table.agg th:first-child, table.agg td:first-child { text-align: left; }
   table.agg thead th { background: #FAFAF7; color: var(--sub); font-size: 11.5px; }
+  .monthly-year-card, .monthly-year-divider { background:#FAFAF7; }
 
   /* ===== YHT 프로그램형 UI v2 ===== */
   body { padding:0; background:#F3F4F6; }
@@ -94,7 +95,7 @@
   .settings-trigger { width:100%; padding:10px 12px; border:1px solid rgba(255,255,255,.22); border-radius:8px; background:transparent; color:#fff; text-align:left; font-size:13px; font-weight:700; cursor:pointer; }
   .settings-trigger:hover { background:rgba(255,255,255,.1); }
   .settings-mobile { display:none; }
-  .theme-options { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+  .theme-options { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
   .theme-option { padding:12px; border:2px solid var(--line); border-radius:10px; background:#fff; text-align:left; cursor:pointer; color:var(--ink); font-weight:700; }
   .theme-option[aria-pressed="true"] { border-color:var(--accent); background:var(--accent-soft); }
   .theme-swatch { display:block; width:100%; height:25px; border-radius:5px; margin-bottom:8px; }
@@ -113,21 +114,40 @@
   .theme-pink .section-head, .theme-pink .quick-btn { border-color:var(--line); }
   .theme-pink .quick-btn:hover, .theme-pink .lock-note, .theme-pink table.agg thead th { background:#FFF0F5; }
   .theme-pink .card.pending { background:#FFF1F6; }
-  body.theme-butter { --bg:#FFFBEF; --panel:#FFFFFF; --ink:#39342A; --sub:#786F5F; --line:#EDE3C8; --accent:#956313; --accent-soft:#FFF0C4; --steel:#8A6A2A; --steel-soft:#FAEDC9; --danger:#A34D34; --danger-soft:#FBE9DF; --ok:#527355; --ok-soft:#E8F0DE; --wait:#8E713A; --wait-soft:#F8EDCE; background:#FFFBEF; }
-  .theme-butter .sidebar { background:#FFFEFA; color:#39342A; border-right:1px solid var(--line); }
-  .theme-butter .mobile-nav { background:#FFFEFA; border-bottom:1px solid var(--line); }
+  .theme-pink .nav-btn[data-tab="monthly"].active { background:#EBECEE; color:#4D525A; }
+  .theme-pink.view-monthly { background:#F6F6F7; }
+  .theme-pink #tab-monthly { --line:#E4E5E8; --sub:#666B73; --ink:#30343A; }
+  .theme-pink #tab-monthly .panel { background:#FAFAFB; border-color:#E4E5E8; }
+  .theme-pink #tab-monthly .monthly-year-card { background:#FFFFFF; border-color:#E4E5E8; }
+  .theme-pink #tab-monthly .monthly-year-divider, .theme-pink #tab-monthly table.agg thead th { background:#F0F1F3; }
+  body.theme-butter { --bg:#F7F4EC; --panel:#FBFAF6; --ink:#35332E; --sub:#716B60; --line:#DED8C9; --accent:#80642C; --accent-soft:#EEE6D2; --steel:#74663F; --steel-soft:#EAE7DA; --danger:#9C4E3D; --danger-soft:#F4E7E2; --ok:#527355; --ok-soft:#E8F0DE; --wait:#82734F; --wait-soft:#EFEADB; background:#F7F4EC; }
+  .theme-butter .sidebar { background:#F5F2E9; color:#35332E; border-right:1px solid var(--line); }
+  .theme-butter .mobile-nav { background:#F5F2E9; border-bottom:1px solid var(--line); }
   .theme-butter .side-brand { border-bottom-color:var(--line); }
   .theme-butter .side-brand .small { color:#97866A; }
   .theme-butter .nav-btn { color:#625A4B; }
-  .theme-butter .nav-btn.active { background:#FFF0C4; color:#80530D; }
-  .theme-butter .nav-btn:hover { background:#FFF6DA; color:#80530D; }
+  .theme-butter .nav-btn.active { background:#EAE3CE; color:#665225; }
+  .theme-butter .nav-btn:hover { background:#EEE9DB; color:#665225; }
   .theme-butter .settings-trigger { color:#625A4B; border-color:var(--line); }
-  .theme-butter .settings-trigger:hover { background:#FFF6DA; }
-  .theme-butter .topbar { background:#FFFFFF; border:1px solid var(--line); border-radius:9px; padding:12px 14px; }
-  .theme-butter .dash-card, .theme-butter .section-panel, .theme-butter .quick-btn, .theme-butter .modal-box { background:#FFFFFF; border-color:var(--line); }
+  .theme-butter .settings-trigger:hover { background:#EEE9DB; }
+  .theme-butter .topbar { background:#FBFAF6; border:1px solid var(--line); border-radius:9px; padding:12px 14px; }
+  .theme-butter .dash-card, .theme-butter .section-panel, .theme-butter .quick-btn, .theme-butter .modal-box { background:#FBFAF6; border-color:var(--line); }
+  .theme-butter .card:not(.flagged):not(.pending), .theme-butter .stat, .theme-butter .filter-btn:not(.active) { background:#FBFAF6; border-color:var(--line); }
   .theme-butter .section-head, .theme-butter .quick-btn { border-color:var(--line); }
-  .theme-butter .quick-btn:hover, .theme-butter .lock-note, .theme-butter table.agg thead th { background:#FFF7E1; }
-  .theme-butter .card.pending { background:#FFF9E8; }
+  .theme-butter .quick-btn:hover, .theme-butter .lock-note, .theme-butter table.agg thead th { background:#F1EDE1; }
+  .theme-butter .card.pending { background:#F4F0E5; }
+  body.theme-ink { --bg:#FFF8FB; --panel:#FFFFFF; --ink:#2F3139; --sub:#71717C; --line:#EADCE4; --accent:#A94D72; --accent-soft:#F9E8F0; --steel:#52677C; --steel-soft:#E7EDF2; --danger:#A74761; --danger-soft:#F8E8ED; --ok:#4F735F; --ok-soft:#E7F0E9; --wait:#8B7657; --wait-soft:#F4EEDA; background:#FFF8FB; }
+  .theme-ink .sidebar { background:#263240; color:#FFFFFF; }
+  .theme-ink .mobile-nav { background:#263240; }
+  .theme-ink .nav-btn { color:#E5EAF0; }
+  .theme-ink .nav-btn.active { background:#405061; color:#FFFFFF; }
+  .theme-ink .nav-btn:hover { background:#354456; color:#FFFFFF; }
+  .theme-ink .settings-trigger { color:#FFFFFF; border-color:#5A6877; }
+  .theme-ink .settings-trigger:hover { background:#354456; }
+  .theme-ink .topbar { background:#FFFFFF; border:1px solid var(--line); border-radius:9px; padding:12px 14px; }
+  .theme-ink .dash-card, .theme-ink .section-panel, .theme-ink .quick-btn, .theme-ink .modal-box { background:#FFFFFF; border-color:var(--line); }
+  .theme-ink .section-head, .theme-ink .quick-btn { border-color:var(--line); }
+  .theme-ink .quick-btn:hover, .theme-ink .lock-note, .theme-ink table.agg thead th { background:#F8F3F6; }
   .main-area { flex:1; min-width:0; padding:22px 26px 30px; }
   .main-inner { max-width:1450px; margin:0 auto; }
   .topbar { display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:20px; }
@@ -201,7 +221,8 @@
     <div class="theme-options">
       <button type="button" class="theme-option" data-theme="default" onclick="setTheme('default')"><span class="theme-swatch" style="background:linear-gradient(90deg,#1F2937 50%,#D9731C 50%)"></span>기본 색상</button>
       <button type="button" class="theme-option" data-theme="pink" onclick="setTheme('pink')"><span class="theme-swatch" style="background:linear-gradient(90deg,#FFFFFF 50%,#FDE8F1 50%);border:1px solid #F2D9E4;box-sizing:border-box"></span>연분홍</button>
-      <button type="button" class="theme-option" data-theme="butter" onclick="setTheme('butter')"><span class="theme-swatch" style="background:linear-gradient(90deg,#FFFEFA 50%,#FFF0C4 50%);border:1px solid #EDE3C8;box-sizing:border-box"></span>버터색</button>
+      <button type="button" class="theme-option" data-theme="butter" onclick="setTheme('butter')"><span class="theme-swatch" style="background:linear-gradient(90deg,#F5F2E9 50%,#EAE3CE 50%);border:1px solid #DED8C9;box-sizing:border-box"></span>버터색</button>
+      <button type="button" class="theme-option" data-theme="ink" onclick="setTheme('ink')"><span class="theme-swatch" style="background:linear-gradient(90deg,#263240 50%,#FFF8FB 50%)"></span>잉크네이비</button>
     </div>
     <div class="modal-actions"><button class="btn-primary" type="button" onclick="closeSettings()">닫기</button></div>
   </div>
@@ -314,10 +335,11 @@ let currentTab = "dashboard";
 
 const THEME_KEY = "yht_theme";
 function setTheme(theme) {
-  const chosen = theme === "pink" || theme === "butter" ? theme : "default";
+  const chosen = ["pink", "butter", "ink"].includes(theme) ? theme : "default";
   document.body.classList.toggle("theme-pink", chosen === "pink");
   document.body.classList.toggle("theme-butter", chosen === "butter");
-  document.querySelector('meta[name="theme-color"]').content = chosen === "pink" ? "#FFF7FB" : chosen === "butter" ? "#FFFBEF" : "#3E6E8E";
+  document.body.classList.toggle("theme-ink", chosen === "ink");
+  document.querySelector('meta[name="theme-color"]').content = chosen === "pink" ? "#FFF7FB" : chosen === "butter" ? "#F7F4EC" : chosen === "ink" ? "#263240" : "#3E6E8E";
   document.querySelectorAll(".theme-option").forEach(button => button.setAttribute("aria-pressed", String(button.dataset.theme === chosen)));
   localStorage.setItem(THEME_KEY, chosen);
 }
@@ -550,6 +572,7 @@ function renderDashboard(m) {
 
 function switchTab(tab) {
   currentTab = tab;
+  document.body.classList.toggle("view-monthly", tab === "monthly");
   document.querySelectorAll('.nav-btn[data-tab]').forEach(x=>x.classList.toggle('active',x.dataset.tab===tab));
   document.querySelectorAll('.tabcontent').forEach(x=>x.style.display='none');
   const target=document.getElementById('tab-'+tab); if(target) target.style.display='block';
@@ -702,7 +725,7 @@ function renderMonthly() {
     const years = Object.keys(yearTotals).sort().reverse();
 
     const yearCards = years.map(y => `
-      <div style="flex:1;min-width:180px;background:#FAFAF7;border:1px solid var(--line);border-radius:8px;padding:10px 12px">
+      <div class="monthly-year-card" style="flex:1;min-width:180px;border:1px solid var(--line);border-radius:8px;padding:10px 12px">
         <div style="font-size:13px;font-weight:700;margin-bottom:6px">${y}년 합계</div>
         <div style="font-size:11.5px;color:var(--sub);display:flex;justify-content:space-between"><span>수주</span><b style="color:var(--ink);font-size:13px">${won(yearTotals[y].order)}</b></div>
         <div style="font-size:11.5px;color:var(--sub);display:flex;justify-content:space-between"><span>납품완료</span><b style="color:var(--ink);font-size:13px">${won(yearTotals[y].done)}</b></div>
@@ -714,7 +737,7 @@ function renderMonthly() {
     let lastYear = null;
     const rows = monthKeys.map(k => {
       const y = k.slice(0,4);
-      const yearDivider = y !== lastYear ? `<tr><td colspan="4" style="background:#FAFAF7;font-weight:700;color:var(--sub);font-size:11.5px">${y}년</td></tr>` : "";
+      const yearDivider = y !== lastYear ? `<tr><td colspan="4" class="monthly-year-divider" style="font-weight:700;color:var(--sub);font-size:11.5px">${y}년</td></tr>` : "";
       lastYear = y;
       return yearDivider + `<tr><td>${monthLabel(k)}</td><td>${won(buckets[k].order)}</td><td>${won(buckets[k].done)}</td><td>${won(buckets[k].settle)}</td></tr>`;
     }).join("");
