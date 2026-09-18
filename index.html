@@ -697,10 +697,9 @@ function renderTab(key) {
   const filterHtml = filters.map(([id,label]) => `<button class="filter-btn ${st.filterMode===id?'active':''}" onclick="setFilter('${key}','${id}')">${label}</button>`).join("");
   const selCount = selected[key].size;
   const canComplete = st.filterMode !== "done" && selCount > 0 && [...selected[key]].every(id => DATA[key].some(r => r.rowIndex === id && r.status !== "완료"));
-  const oneDoneSelected = selCount === 1 && DATA[key].some(r => selected[key].has(r.rowIndex) && r.status === "완료");
+  const doneSelected = selCount > 0 && [...selected[key]].every(id => DATA[key].some(r => r.rowIndex === id && r.status === "완료"));
   const ownerButtons = IS_OWNER ? `
-    <button class="bulk-btn" style="background:var(--steel)" ${oneDoneSelected?"":"disabled"} onclick="doSelectedStatement('${key}')">📄 거래명세서 쓰기</button>
-    ${oneDoneSelected ? "" : '<span style="font-size:11px;color:var(--sub)">납품완료 건 1개를 체크하세요</span>'}
+    <button class="bulk-btn" style="background:var(--steel)" ${doneSelected?"":"disabled"} onclick="doSelectedStatement('${key}')">📄 선택 ${selCount}건 거래명세서 쓰기</button>
     <button class="bulk-btn" ${canComplete?"":"disabled"} onclick="doBulkComplete('${key}')">✅ 선택 ${selCount}건 납품처리</button>
     <button class="bulk-btn" style="background:#8A8A8A" ${selCount===0?"disabled":""} onclick="doUndoComplete('${key}')">↩️ 선택 ${selCount}건 납품취소</button>
     <button class="bulk-btn" style="background:var(--wait)" ${selCount===0?"disabled":""} onclick="doBulkSettle('${key}')">💰 선택 ${selCount}건 정산완료</button>
@@ -835,17 +834,14 @@ function doBulkComplete(key) {
 }
 function doSelectedStatement(key) {
   const ids = [...selected[key]];
-  if (ids.length !== 1) return showToast("납품완료 건 하나만 선택해 주세요");
-  doWriteStatement(key, ids[0]);
-}
-function doWriteStatement(key, rowIndex) {
-  const row = DATA[key].find(r => r.rowIndex === rowIndex);
-  if (!row || row.status !== "완료") return showToast("납품완료 건을 선택해 주세요");
-  if (!confirm(`${row.id} / ${row.item}\n이 건의 거래명세서를 작성할까요?`)) return;
+  if (!ids.length || !ids.every(id => DATA[key].some(r => r.rowIndex === id && r.status === "완료"))) {
+    return showToast("납품완료 건만 선택해 주세요");
+  }
+  if (!confirm(`선택한 ${ids.length}건을 한 장의 거래명세서에 작성할까요?`)) return;
   google.script.run.withSuccessHandler((res) => {
     selected[key].clear(); renderTab(key);
-    showToast("거래명세서를 작성했습니다", res.statementUrl);
-  }).withFailureHandler((e) => showToast("오류: " + e.message)).writeStatement(key, rowIndex, ADMIN_PW);
+    showToast(`거래명세서에 ${ids.length}건을 작성했습니다`, res.statementUrl);
+  }).withFailureHandler((e) => showToast("오류: " + e.message)).writeStatement(key, ids, ADMIN_PW);
 }
 function doBulkSettle(key) {
   const ids = [...selected[key]];
@@ -1166,3 +1162,4 @@ if ('serviceWorker' in navigator && location.protocol === 'https:') {
 </script>
 </body>
 </html>
+
