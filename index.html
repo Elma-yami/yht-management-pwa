@@ -94,18 +94,40 @@
   .settings-trigger { width:100%; padding:10px 12px; border:1px solid rgba(255,255,255,.22); border-radius:8px; background:transparent; color:#fff; text-align:left; font-size:13px; font-weight:700; cursor:pointer; }
   .settings-trigger:hover { background:rgba(255,255,255,.1); }
   .settings-mobile { display:none; }
-  .theme-options { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .theme-options { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
   .theme-option { padding:12px; border:2px solid var(--line); border-radius:10px; background:#fff; text-align:left; cursor:pointer; color:var(--ink); font-weight:700; }
   .theme-option[aria-pressed="true"] { border-color:var(--accent); background:var(--accent-soft); }
   .theme-swatch { display:block; width:100%; height:25px; border-radius:5px; margin-bottom:8px; }
-  body.theme-pink { --bg:#FFF6F9; --panel:#FFFCFD; --ink:#3F2B35; --sub:#806B77; --line:#EBCFD9; --accent:#B54972; --accent-soft:#FCE4EC; --steel:#A64D73; --steel-soft:#F8DAE6; --danger:#A7355E; --danger-soft:#FBE3EB; --wait:#946A7C; --wait-soft:#F8EAF0; background:#FFF6F9; }
-  .theme-pink .sidebar, .theme-pink .mobile-nav { background:#8D4263; }
-  .theme-pink .nav-btn.active { background:#AF5C7F; }
-  .theme-pink .nav-btn:hover { background:rgba(255,255,255,.14); }
-  .theme-pink .dash-card, .theme-pink .section-panel, .theme-pink .quick-btn, .theme-pink .modal-box { background:#FFFCFD; border-color:var(--line); }
+  body.theme-pink { --bg:#FFF7FB; --panel:#FFFFFF; --ink:#342D35; --sub:#806D79; --line:#F2D9E4; --accent:#C83D75; --accent-soft:#FDE8F1; --steel:#B94C78; --steel-soft:#FCE7F0; --danger:#B83D68; --danger-soft:#FDE7EF; --wait:#9A7583; --wait-soft:#F9EEF2; background:#FFF7FB; }
+  .theme-pink .sidebar { background:#FFFFFF; color:#342D35; border-right:1px solid var(--line); }
+  .theme-pink .mobile-nav { background:#FFFFFF; border-bottom:1px solid var(--line); }
+  .theme-pink .side-brand { border-bottom-color:var(--line); }
+  .theme-pink .side-brand .small { color:#9B7D8C; }
+  .theme-pink .nav-btn { color:#675863; }
+  .theme-pink .nav-btn.active { background:#FDE8F1; color:#B9346B; }
+  .theme-pink .nav-btn:hover { background:#FFF0F6; color:#B9346B; }
+  .theme-pink .settings-trigger { color:#675863; border-color:var(--line); }
+  .theme-pink .settings-trigger:hover { background:#FFF0F6; }
+  .theme-pink .topbar { background:#FFFFFF; border:1px solid var(--line); border-radius:9px; padding:12px 14px; }
+  .theme-pink .dash-card, .theme-pink .section-panel, .theme-pink .quick-btn, .theme-pink .modal-box { background:#FFFFFF; border-color:var(--line); }
   .theme-pink .section-head, .theme-pink .quick-btn { border-color:var(--line); }
   .theme-pink .quick-btn:hover, .theme-pink .lock-note, .theme-pink table.agg thead th { background:#FFF0F5; }
   .theme-pink .card.pending { background:#FFF1F6; }
+  body.theme-butter { --bg:#FFFBEF; --panel:#FFFFFF; --ink:#39342A; --sub:#786F5F; --line:#EDE3C8; --accent:#956313; --accent-soft:#FFF0C4; --steel:#8A6A2A; --steel-soft:#FAEDC9; --danger:#A34D34; --danger-soft:#FBE9DF; --ok:#527355; --ok-soft:#E8F0DE; --wait:#8E713A; --wait-soft:#F8EDCE; background:#FFFBEF; }
+  .theme-butter .sidebar { background:#FFFEFA; color:#39342A; border-right:1px solid var(--line); }
+  .theme-butter .mobile-nav { background:#FFFEFA; border-bottom:1px solid var(--line); }
+  .theme-butter .side-brand { border-bottom-color:var(--line); }
+  .theme-butter .side-brand .small { color:#97866A; }
+  .theme-butter .nav-btn { color:#625A4B; }
+  .theme-butter .nav-btn.active { background:#FFF0C4; color:#80530D; }
+  .theme-butter .nav-btn:hover { background:#FFF6DA; color:#80530D; }
+  .theme-butter .settings-trigger { color:#625A4B; border-color:var(--line); }
+  .theme-butter .settings-trigger:hover { background:#FFF6DA; }
+  .theme-butter .topbar { background:#FFFFFF; border:1px solid var(--line); border-radius:9px; padding:12px 14px; }
+  .theme-butter .dash-card, .theme-butter .section-panel, .theme-butter .quick-btn, .theme-butter .modal-box { background:#FFFFFF; border-color:var(--line); }
+  .theme-butter .section-head, .theme-butter .quick-btn { border-color:var(--line); }
+  .theme-butter .quick-btn:hover, .theme-butter .lock-note, .theme-butter table.agg thead th { background:#FFF7E1; }
+  .theme-butter .card.pending { background:#FFF9E8; }
   .main-area { flex:1; min-width:0; padding:22px 26px 30px; }
   .main-inner { max-width:1450px; margin:0 auto; }
   .topbar { display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:20px; }
@@ -178,7 +200,8 @@
     <div style="font-size:12px;color:var(--sub);margin-bottom:10px">화면 색상</div>
     <div class="theme-options">
       <button type="button" class="theme-option" data-theme="default" onclick="setTheme('default')"><span class="theme-swatch" style="background:linear-gradient(90deg,#1F2937 50%,#D9731C 50%)"></span>기본 색상</button>
-      <button type="button" class="theme-option" data-theme="pink" onclick="setTheme('pink')"><span class="theme-swatch" style="background:linear-gradient(90deg,#8D4263 50%,#FCE4EC 50%)"></span>연분홍</button>
+      <button type="button" class="theme-option" data-theme="pink" onclick="setTheme('pink')"><span class="theme-swatch" style="background:linear-gradient(90deg,#FFFFFF 50%,#FDE8F1 50%);border:1px solid #F2D9E4;box-sizing:border-box"></span>연분홍</button>
+      <button type="button" class="theme-option" data-theme="butter" onclick="setTheme('butter')"><span class="theme-swatch" style="background:linear-gradient(90deg,#FFFEFA 50%,#FFF0C4 50%);border:1px solid #EDE3C8;box-sizing:border-box"></span>버터색</button>
     </div>
     <div class="modal-actions"><button class="btn-primary" type="button" onclick="closeSettings()">닫기</button></div>
   </div>
@@ -291,9 +314,10 @@ let currentTab = "dashboard";
 
 const THEME_KEY = "yht_theme";
 function setTheme(theme) {
-  const chosen = theme === "pink" ? "pink" : "default";
+  const chosen = theme === "pink" || theme === "butter" ? theme : "default";
   document.body.classList.toggle("theme-pink", chosen === "pink");
-  document.querySelector('meta[name="theme-color"]').content = chosen === "pink" ? "#8D4263" : "#3E6E8E";
+  document.body.classList.toggle("theme-butter", chosen === "butter");
+  document.querySelector('meta[name="theme-color"]').content = chosen === "pink" ? "#FFF7FB" : chosen === "butter" ? "#FFFBEF" : "#3E6E8E";
   document.querySelectorAll(".theme-option").forEach(button => button.setAttribute("aria-pressed", String(button.dataset.theme === chosen)));
   localStorage.setItem(THEME_KEY, chosen);
 }
