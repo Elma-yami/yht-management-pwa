@@ -463,7 +463,7 @@ function renderDashboard(m) {
         <div class="section-head">빠른 작업</div>
         <div class="section-body">
           <div class="quick-grid">
-            ${IS_OWNER?`<button class="quick-btn" onclick="openAddModal('mt')">＋ 유지보수 등록</button><button class="quick-btn" onclick="openAddModal('gas')">＋ 국소배기 등록</button>`:''}
+            ${IS_OWNER?`<button class="quick-btn" onclick="openPasteModal('mt')">📋 유지보수 붙여넣기</button><button class="quick-btn" onclick="openPasteModal('gas')">📋 국소배기 붙여넣기</button>`:''}
             <button class="quick-btn" onclick="switchTab('mt')">🔧 유지보수 목록</button>
             <button class="quick-btn" onclick="switchTab('gas')">🌬️ 국소배기 목록</button>
             <button class="quick-btn" onclick="switchTab('monthly')">📊 월별 집계</button>
@@ -574,14 +574,14 @@ function renderTab(key) {
   const filters = [["all","전체"],["inprogress","진행중만"],["done","납품완료만"],["unsettled","미정산만"]];
   const filterHtml = filters.map(([id,label]) => `<button class="filter-btn ${st.filterMode===id?'active':''}" onclick="setFilter('${key}','${id}')">${label}</button>`).join("");
   const selCount = selected[key].size;
+  const canComplete = st.filterMode !== "done" && selCount > 0 && [...selected[key]].every(id => DATA[key].some(r => r.rowIndex === id && r.status !== "완료"));
   const oneDoneSelected = selCount === 1 && DATA[key].some(r => selected[key].has(r.rowIndex) && r.status === "완료");
   const ownerButtons = IS_OWNER ? `
     <button class="bulk-btn" style="background:var(--steel)" ${oneDoneSelected?"":"disabled"} onclick="doSelectedStatement('${key}')">📄 거래명세서 쓰기</button>
-    <button class="bulk-btn" ${selCount===0?"disabled":""} onclick="doBulkComplete('${key}')">✅ 선택 ${selCount}건 납품처리</button>
+    <button class="bulk-btn" ${canComplete?"":"disabled"} onclick="doBulkComplete('${key}')">✅ 선택 ${selCount}건 납품처리</button>
     <button class="bulk-btn" style="background:#8A8A8A" ${selCount===0?"disabled":""} onclick="doUndoComplete('${key}')">↩️ 선택 ${selCount}건 납품취소</button>
     <button class="bulk-btn" style="background:var(--wait)" ${selCount===0?"disabled":""} onclick="doBulkSettle('${key}')">💰 선택 ${selCount}건 정산완료</button>
     <button class="bulk-btn" style="background:var(--danger)" ${selCount===0?"disabled":""} onclick="doDelete('${key}')">🗑️ 선택 ${selCount}건 삭제</button>
-    <button class="bulk-btn" style="background:var(--steel)" onclick="openAddModal('${key}')">➕ 새 건 등록</button>
     <button class="bulk-btn" style="background:#6B5B95" onclick="openPasteModal('${key}')">📋 붙여넣기로 등록</button>
   ` : "";
 
@@ -700,6 +700,10 @@ function doPartialSettle(key, rowIndex, totalQty) {
 function doBulkComplete(key) {
   const ids = [...selected[key]];
   if (!ids.length) return;
+  if (tabState[key].filterMode === "done" || !ids.every(id => DATA[key].some(r => r.rowIndex === id && r.status !== "완료"))) {
+    showToast("납품완료 건은 다시 납품처리할 수 없습니다");
+    return;
+  }
   google.script.run.withSuccessHandler((res) => {
     DATA[key] = res.rows; selected[key] = new Set();
     renderStats(); renderTab(key); renderMonthly();
