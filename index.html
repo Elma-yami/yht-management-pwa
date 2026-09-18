@@ -629,8 +629,8 @@ function monthSelectHtml(key, rowsForCount) {
   return `<select onchange="setMonth('${key}', this.value)">${opts}</select>`;
 }
 
-function setMonth(key, v) { tabState[key].month = v; renderTab(key); }
-function setFilter(key, v) { tabState[key].filterMode = v; renderTab(key); }
+function setMonth(key, v) { tabState[key].month = v; selected[key].clear(); renderTab(key); }
+function setFilter(key, v) { tabState[key].filterMode = v; selected[key].clear(); renderTab(key); }
 function setSearch(key, v) { tabState[key].search = v; renderTab(key); }
 function toggleSelect(key, rowIndex) {
   const s = selected[key];
@@ -700,6 +700,7 @@ function renderTab(key) {
   const oneDoneSelected = selCount === 1 && DATA[key].some(r => selected[key].has(r.rowIndex) && r.status === "완료");
   const ownerButtons = IS_OWNER ? `
     <button class="bulk-btn" style="background:var(--steel)" ${oneDoneSelected?"":"disabled"} onclick="doSelectedStatement('${key}')">📄 거래명세서 쓰기</button>
+    ${oneDoneSelected ? "" : '<span style="font-size:11px;color:var(--sub)">납품완료 건 1개를 체크하세요</span>'}
     <button class="bulk-btn" ${canComplete?"":"disabled"} onclick="doBulkComplete('${key}')">✅ 선택 ${selCount}건 납품처리</button>
     <button class="bulk-btn" style="background:#8A8A8A" ${selCount===0?"disabled":""} onclick="doUndoComplete('${key}')">↩️ 선택 ${selCount}건 납품취소</button>
     <button class="bulk-btn" style="background:var(--wait)" ${selCount===0?"disabled":""} onclick="doBulkSettle('${key}')">💰 선택 ${selCount}건 정산완료</button>
