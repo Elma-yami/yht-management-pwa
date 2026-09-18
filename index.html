@@ -433,18 +433,18 @@ async function exportExcel(mode) {
   showToast(`${sheetTitle} ${count}건을 엑셀로 내보냈습니다`);
 }
 
-const SNAPSHOT_KEY = "yht_session_snapshot_v1";
+const SNAPSHOT_KEY = "yht_recent_snapshot_v2";
 let snapshotVerified = false;
-function saveSessionSnapshot() {
+function saveRecentSnapshot() {
   if (!snapshotVerified) return;
   try {
-    sessionStorage.setItem(SNAPSHOT_KEY, JSON.stringify({ savedAt: Date.now(), mt: DATA.mt, gas: DATA.gas, todayStr: TODAY }));
+    localStorage.setItem(SNAPSHOT_KEY, JSON.stringify({ savedAt: Date.now(), mt: DATA.mt, gas: DATA.gas, todayStr: TODAY }));
   } catch (_) { /* 저장 공간이 부족해도 서버 조회는 계속됩니다. */ }
 }
-function showSessionSnapshot() {
+function showRecentSnapshot() {
   try {
-    const cached = JSON.parse(sessionStorage.getItem(SNAPSHOT_KEY) || "null");
-    if (!cached || Date.now() - cached.savedAt > 30 * 60 * 1000 || !Array.isArray(cached.mt) || !Array.isArray(cached.gas)) return false;
+    const cached = JSON.parse(localStorage.getItem(SNAPSHOT_KEY) || "null");
+    if (!cached || Date.now() - cached.savedAt > 12 * 60 * 60 * 1000 || !Array.isArray(cached.mt) || !Array.isArray(cached.gas)) return false;
     DATA.mt = cached.mt; DATA.gas = cached.gas; TODAY = cached.todayStr || "";
     IS_OWNER = false; snapshotVerified = false;
     renderStats(); switchTab(currentTab || "dashboard");
@@ -456,7 +456,7 @@ function showSessionSnapshot() {
   } catch (_) { return false; }
 }
 function loadData() {
-  const hadSnapshot = showSessionSnapshot();
+  const hadSnapshot = showRecentSnapshot();
   google.script.run.withSuccessHandler((res) => {
     DATA.mt = res.mt; DATA.gas = res.gas;
     IS_OWNER = res.isOwner; TODAY = res.todayStr;
@@ -522,7 +522,7 @@ function setDashboardYear(year) {
 }
 
 function renderStats() {
-  saveSessionSnapshot();
+  saveRecentSnapshot();
   const allRows = [...DATA.mt, ...DATA.gas];
   const years = [...new Set(allRows.map(r => String(r.orderDate || "").slice(0, 4)).filter(y => /^\d{4}$/.test(y)))].sort().reverse();
   if (DASHBOARD_YEAR !== "all" && !years.includes(DASHBOARD_YEAR)) DASHBOARD_YEAR = "all";
