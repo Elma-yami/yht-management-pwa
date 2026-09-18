@@ -91,6 +91,21 @@
   .nav-btn:hover { background:rgba(255,255,255,.07); color:#fff; }
   .nav-btn.active { background:#374151; color:#fff; }
   .side-bottom { margin-top:auto; padding:12px 10px 2px; font-size:11px; color:#9CA3AF; line-height:1.6; }
+  .settings-trigger { width:100%; padding:10px 12px; border:1px solid rgba(255,255,255,.22); border-radius:8px; background:transparent; color:#fff; text-align:left; font-size:13px; font-weight:700; cursor:pointer; }
+  .settings-trigger:hover { background:rgba(255,255,255,.1); }
+  .settings-mobile { display:none; }
+  .theme-options { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .theme-option { padding:12px; border:2px solid var(--line); border-radius:10px; background:#fff; text-align:left; cursor:pointer; color:var(--ink); font-weight:700; }
+  .theme-option[aria-pressed="true"] { border-color:var(--accent); background:var(--accent-soft); }
+  .theme-swatch { display:block; width:100%; height:25px; border-radius:5px; margin-bottom:8px; }
+  body.theme-pink { --bg:#FFF6F9; --panel:#FFFCFD; --ink:#3F2B35; --sub:#806B77; --line:#EBCFD9; --accent:#B54972; --accent-soft:#FCE4EC; --steel:#A64D73; --steel-soft:#F8DAE6; --danger:#A7355E; --danger-soft:#FBE3EB; --wait:#946A7C; --wait-soft:#F8EAF0; background:#FFF6F9; }
+  .theme-pink .sidebar, .theme-pink .mobile-nav { background:#8D4263; }
+  .theme-pink .nav-btn.active { background:#AF5C7F; }
+  .theme-pink .nav-btn:hover { background:rgba(255,255,255,.14); }
+  .theme-pink .dash-card, .theme-pink .section-panel, .theme-pink .quick-btn, .theme-pink .modal-box { background:#FFFCFD; border-color:var(--line); }
+  .theme-pink .section-head, .theme-pink .quick-btn { border-color:var(--line); }
+  .theme-pink .quick-btn:hover, .theme-pink .lock-note, .theme-pink table.agg thead th { background:#FFF0F5; }
+  .theme-pink .card.pending { background:#FFF1F6; }
   .main-area { flex:1; min-width:0; padding:22px 26px 30px; }
   .main-inner { max-width:1450px; margin:0 auto; }
   .topbar { display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:20px; }
@@ -109,7 +124,7 @@
   .mobile-nav { display:none; }
   .wrap { max-width:none; margin:0; }
   @media (max-width:900px){.sidebar{width:180px;flex-basis:180px}.main-area{padding:16px}.dashboard-grid{grid-template-columns:repeat(2,1fr)}.dashboard-cols{grid-template-columns:1fr}}
-  @media (max-width:640px){.app-shell{display:block}.sidebar{display:none}.mobile-nav{display:flex;position:sticky;top:0;z-index:30;background:#1F2937;padding:8px;gap:5px;overflow:auto}.mobile-nav .nav-btn{white-space:nowrap;width:auto}.main-area{padding:12px}.dashboard-grid{grid-template-columns:1fr 1fr}.topbar{align-items:flex-start;flex-direction:column}.top-actions{justify-content:flex-start}.form-grid{grid-template-columns:1fr}.full{grid-column:auto}}
+  @media (max-width:640px){.app-shell{display:block}.sidebar{display:none}.mobile-nav{display:flex;position:sticky;top:0;z-index:30;background:#1F2937;padding:8px;gap:5px;overflow:auto}.mobile-nav .nav-btn{white-space:nowrap;width:auto}.main-area{padding:12px}.dashboard-grid{grid-template-columns:1fr 1fr}.topbar{align-items:flex-start;flex-direction:column}.top-actions{justify-content:flex-start}.form-grid{grid-template-columns:1fr}.full{grid-column:auto}.settings-mobile{display:inline-flex}}
 </style>
 </head>
 <body>
@@ -120,7 +135,7 @@
     <button class="nav-btn" data-tab="mt">🔧 유지보수 수주관리</button>
     <button class="nav-btn" data-tab="gas">🌬️ 국소배기 수주관리</button>
     <button class="nav-btn" data-tab="monthly">📊 월별 집계</button>
-    <div class="side-bottom">Google Sheets 기반<br>웹앱 · 데이터 자동 동기화</div>
+    <div class="side-bottom"><button class="settings-trigger" onclick="openSettings()">⚙ 설정</button></div>
   </aside>
   <div class="main-area">
     <div class="mobile-nav">
@@ -136,6 +151,7 @@
           <h1 id="pageTitle">대시보드</h1>
         </div>
         <div class="top-actions">
+          <button class="filter-btn settings-mobile" onclick="openSettings()">⚙ 설정</button>
           <span id="roleBadge" class="badge-role badge-viewer">불러오는 중...</span>
           <button class="filter-btn" id="importSettlementBtn" style="background:#6B5B95;color:#fff;border-color:#6B5B95;display:none">📥 정산리스트</button>
           <select id="exportCategorySelect" style="font-size:12px;padding:6px 7px">
@@ -156,6 +172,18 @@
 
 <div class="toast" id="toast"></div>
 
+<div class="modal-overlay" id="settingsModal" role="dialog" aria-modal="true" aria-label="설정">
+  <div class="modal-box" style="max-width:400px">
+    <div class="modal-title">⚙ 설정</div>
+    <div style="font-size:12px;color:var(--sub);margin-bottom:10px">화면 색상</div>
+    <div class="theme-options">
+      <button type="button" class="theme-option" data-theme="default" onclick="setTheme('default')"><span class="theme-swatch" style="background:linear-gradient(90deg,#1F2937 50%,#D9731C 50%)"></span>기본 색상</button>
+      <button type="button" class="theme-option" data-theme="pink" onclick="setTheme('pink')"><span class="theme-swatch" style="background:linear-gradient(90deg,#8D4263 50%,#FCE4EC 50%)"></span>연분홍</button>
+    </div>
+    <div class="modal-actions"><button class="btn-primary" type="button" onclick="closeSettings()">닫기</button></div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="addModal">
   <div class="modal-box">
     <div class="modal-title" id="addModalTitle">➕ 새 건 등록</div>
@@ -167,7 +195,8 @@
       <div class="form-field"><label>VUD(거래처)</label><input id="f_vud"></div>
       <div class="form-field"><label>라인</label><input id="f_line"></div>
       <div class="form-field"><label>공정</label><input id="f_process"></div>
-      <div class="form-field"><label>설비호기/S/N</label><input id="f_eqp"></div>
+      <div class="form-field"><label>설비호기</label><input id="f_eqp"></div>
+      <div class="form-field"><label>제품 S/N</label><input id="f_sn"></div>
       <div class="form-field full"><label for="f_itemSelect">단가표에서 품목 선택</label><select id="f_itemSelect"><option value="">직접 입력하거나 품목을 선택하세요</option></select></div>
       <div class="form-field full"><label>품목 *</label><textarea id="f_item"></textarea></div>
       <div class="form-field"><label>수량 *</label><input id="f_qty" type="number" value="1"></div>
@@ -183,6 +212,7 @@
     </div>
     <div class="modal-actions">
       <button class="btn-secondary" id="cancelAddBtn">취소</button>
+      <button class="btn-secondary" id="pasteFromAddBtn">📋 붙여넣기로 등록</button>
       <button class="btn-primary" id="submitAddBtn">등록</button>
     </div>
   </div>
@@ -200,7 +230,8 @@
     <textarea id="pasteArea" placeholder="여기에 Ctrl+V" style="width:100%;min-height:160px;font-family:Consolas,monospace;font-size:12px;padding:8px;border:1px solid var(--line);border-radius:6px;box-sizing:border-box"></textarea>
     <div class="modal-actions">
       <button class="btn-secondary" id="cancelPasteBtn">취소</button>
-      <button class="btn-primary" id="submitPasteBtn">등록</button>
+      <button class="btn-secondary" id="convertPasteBtn">한 건을 입력칸으로 변환</button>
+      <button class="btn-primary" id="submitPasteBtn">여러 건 바로 등록</button>
     </div>
   </div>
 </div>
@@ -257,6 +288,18 @@ const tabState = {
 };
 let selected = { mt: new Set(), gas: new Set() };
 let currentTab = "dashboard";
+
+const THEME_KEY = "yht_theme";
+function setTheme(theme) {
+  const chosen = theme === "pink" ? "pink" : "default";
+  document.body.classList.toggle("theme-pink", chosen === "pink");
+  document.querySelector('meta[name="theme-color"]').content = chosen === "pink" ? "#8D4263" : "#3E6E8E";
+  document.querySelectorAll(".theme-option").forEach(button => button.setAttribute("aria-pressed", String(button.dataset.theme === chosen)));
+  localStorage.setItem(THEME_KEY, chosen);
+}
+function openSettings() { document.getElementById("settingsModal").classList.add("open"); }
+function closeSettings() { document.getElementById("settingsModal").classList.remove("open"); }
+setTheme(localStorage.getItem(THEME_KEY));
 
 function esc(s) {
   if (s === null || s === undefined) return "";
@@ -470,7 +513,7 @@ function renderDashboard(m) {
         <div class="section-head">빠른 작업</div>
         <div class="section-body">
           <div class="quick-grid">
-            ${IS_OWNER?`<button class="quick-btn" onclick="openPasteModal('mt')">📋 유지보수 붙여넣기</button><button class="quick-btn" onclick="openPasteModal('gas')">📋 국소배기 붙여넣기</button>`:''}
+            ${IS_OWNER?`<button class="quick-btn" onclick="openAddModal('mt')">＋ 유지보수 등록</button><button class="quick-btn" onclick="openAddModal('gas')">＋ 국소배기 등록</button>`:''}
             <button class="quick-btn" onclick="switchTab('mt')">🔧 유지보수 목록</button>
             <button class="quick-btn" onclick="switchTab('gas')">🌬️ 국소배기 목록</button>
             <button class="quick-btn" onclick="switchTab('monthly')">📊 월별 집계</button>
@@ -589,7 +632,7 @@ function renderTab(key) {
     <button class="bulk-btn" style="background:#8A8A8A" ${selCount===0?"disabled":""} onclick="doUndoComplete('${key}')">↩️ 선택 ${selCount}건 납품취소</button>
     <button class="bulk-btn" style="background:var(--wait)" ${selCount===0?"disabled":""} onclick="doBulkSettle('${key}')">💰 선택 ${selCount}건 정산완료</button>
     <button class="bulk-btn" style="background:var(--danger)" ${selCount===0?"disabled":""} onclick="doDelete('${key}')">🗑️ 선택 ${selCount}건 삭제</button>
-    <button class="bulk-btn" style="background:#6B5B95" onclick="openPasteModal('${key}')">📋 붙여넣기로 등록</button>
+    <button class="bulk-btn" style="background:#6B5B95" onclick="openAddModal('${key}')">➕ 등록</button>
   ` : "";
 
   document.getElementById("tab-" + key).innerHTML = `
@@ -803,12 +846,40 @@ function parsePasteText(text) {
   return results;
 }
 
-function openPasteModal(key) {
+function openPasteModal(key, fromAdd = false) {
   document.getElementById("pasteArea").value = "";
   document.getElementById("pasteModal").dataset.key = key;
+  document.getElementById("pasteModal").dataset.fromAdd = fromAdd ? "1" : "0";
   document.getElementById("pasteModal").classList.add("open");
 }
-function closePasteModal() { document.getElementById("pasteModal").classList.remove("open"); }
+function closePasteModal(returnToAdd = false) {
+  const modal = document.getElementById("pasteModal");
+  modal.classList.remove("open");
+  if (returnToAdd && modal.dataset.fromAdd === "1") document.getElementById("addModal").classList.add("open");
+}
+function convertPasteToForm() {
+  const rows = parsePasteText(document.getElementById("pasteArea").value);
+  if (rows.length !== 1) return showToast("입력칸으로 변환하려면 발주서 한 건만 붙여넣어 주세요");
+  const key = document.getElementById("pasteModal").dataset.key;
+  closePasteModal();
+  openAddModal(key);
+  const row = rows[0];
+  ["id","vud","line","process","eqp","sn","item","qty","orderDate","dueDate","owner","note"].forEach(field => {
+    document.getElementById("f_" + field).value = row[field] == null ? "" : row[field];
+  });
+  document.getElementById("f_price").value = "";
+  fetchPriceItems().then(items => {
+    if (!document.getElementById("addModal").classList.contains("open")) return;
+    const normalize = value => String(value || "").normalize("NFC").replace(/\\_/g, "_").replace(/\s+/g, " ").trim();
+    const match = items.find(x => normalize(x.item) === normalize(row.item));
+    if (match) {
+      document.getElementById("f_price").value = match.price;
+      document.getElementById("f_itemSelect").value = match.item;
+      priceFromTable = true;
+    }
+  }).catch(() => {});
+  showToast("발주서 한 건을 입력칸으로 변환했습니다. 확인 후 등록하세요");
+}
 function submitPasteModal() {
   const key = document.getElementById("pasteModal").dataset.key;
   const text = document.getElementById("pasteArea").value;
@@ -894,9 +965,10 @@ function openAddModal(defaultKey) {
   document.getElementById("f_gubun_field").style.display = "";
   document.getElementById("f_status_field").style.display = "";
   document.getElementById("f_doneDate_field").style.display = "none";
+  document.getElementById("pasteFromAddBtn").style.display = "";
   document.getElementById("f_gubun").disabled = false;
   document.getElementById("f_gubun").value = defaultKey;
-  ["f_id","f_vud","f_line","f_process","f_eqp","f_item","f_price","f_dueDate","f_owner","f_note"].forEach(id => document.getElementById(id).value = "");
+  ["f_id","f_vud","f_line","f_process","f_eqp","f_sn","f_item","f_price","f_dueDate","f_owner","f_note"].forEach(id => document.getElementById(id).value = "");
   document.getElementById("f_qty").value = 1;
   document.getElementById("f_orderDate").value = TODAY;
   document.getElementById("f_status").value = "대기";
@@ -913,6 +985,7 @@ function openEditModal(key, rowIndex) {
   // 구분/상태는 수정 화면에서 바꾸지 않음 (구분은 시트 이동이 필요해서, 상태는 납품처리/취소 버튼으로만 변경)
   document.getElementById("f_gubun_field").style.display = "none";
   document.getElementById("f_status_field").style.display = "none";
+  document.getElementById("pasteFromAddBtn").style.display = "none";
   document.getElementById("f_doneDate_field").style.display = row.status === "완료" ? "" : "none";
   document.getElementById("f_doneDate").value = row.doneDate || "";
   document.getElementById("f_id").value = row.id || "";
@@ -920,6 +993,7 @@ function openEditModal(key, rowIndex) {
   document.getElementById("f_line").value = row.line || "";
   document.getElementById("f_process").value = row.process || "";
   document.getElementById("f_eqp").value = row.eqp || "";
+  document.getElementById("f_sn").value = row.sn || "";
   document.getElementById("f_item").value = row.item || "";
   document.getElementById("f_qty").value = row.qty || 1;
   document.getElementById("f_price").value = row.price === "" || row.price == null ? "" : row.price;
@@ -941,7 +1015,7 @@ function submitAdd() {
     line: document.getElementById("f_line").value.trim(),
     process: document.getElementById("f_process").value.trim(),
     eqp: document.getElementById("f_eqp").value.trim(),
-    sn: editState ? editState.original.sn : "",
+    sn: document.getElementById("f_sn").value.trim(),
     item: document.getElementById("f_item").value.trim(),
     qty: Number(document.getElementById("f_qty").value) || 0,
     price: document.getElementById("f_price").value === "" ? "" : Number(document.getElementById("f_price").value),
@@ -977,7 +1051,13 @@ function submitAdd() {
 
 document.getElementById("cancelAddBtn").onclick = closeAddModal;
 document.getElementById("submitAddBtn").onclick = submitAdd;
-document.getElementById("cancelPasteBtn").onclick = closePasteModal;
+document.getElementById("pasteFromAddBtn").onclick = () => {
+  const key = document.getElementById("f_gubun").value;
+  closeAddModal();
+  openPasteModal(key, true);
+};
+document.getElementById("cancelPasteBtn").onclick = () => closePasteModal(true);
+document.getElementById("convertPasteBtn").onclick = convertPasteToForm;
 document.getElementById("submitPasteBtn").onclick = submitPasteModal;
 
 const settlementFileInput = document.createElement("input");
