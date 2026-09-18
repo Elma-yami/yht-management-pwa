@@ -167,6 +167,7 @@
       <div class="form-field"><label>단가</label><input id="f_price" type="number"></div>
       <div class="form-field"><label>수주일 *</label><input id="f_orderDate" type="date"></div>
       <div class="form-field"><label>납품예정일</label><input id="f_dueDate" type="date"></div>
+      <div class="form-field" id="f_doneDate_field" style="display:none"><label>납품(완료)일</label><input id="f_doneDate" type="date"></div>
       <div class="form-field"><label>현장담당자</label><input id="f_owner"></div>
       <div class="form-field" id="f_status_field"><label>상태</label>
         <select id="f_status"><option value="대기">대기</option><option value="진행중">진행중</option></select>
@@ -554,7 +555,7 @@ function cardHtml(key, r) {
       <div class="card-item">${esc(r.item)}</div>
       <div class="card-meta">${meta}</div>
       <div class="card-bottom">
-        <div class="card-amount">${won(r.amount)} <span style="font-weight:400;color:#6B7280">(${esc(r.qty)}개×${won(r.price)})</span></div>
+        <div class="card-amount">${r.amount === "" || r.amount == null ? "금액 미등록" : won(r.amount)} <span style="font-weight:400;color:#6B7280">(${esc(r.qty)}개×${r.price === "" || r.price == null ? "단가 미등록" : won(r.price)})</span></div>
         <div style="color:#6B7280">${esc(r.owner||"—")} · <span style="${billingColor}">${esc(r.billing||"—")}${billingExtra}</span></div>
       </div>
     </div>
@@ -573,7 +574,9 @@ function renderTab(key) {
   const filters = [["all","전체"],["inprogress","진행중만"],["done","납품완료만"],["unsettled","미정산만"]];
   const filterHtml = filters.map(([id,label]) => `<button class="filter-btn ${st.filterMode===id?'active':''}" onclick="setFilter('${key}','${id}')">${label}</button>`).join("");
   const selCount = selected[key].size;
+  const oneDoneSelected = selCount === 1 && DATA[key].some(r => selected[key].has(r.rowIndex) && r.status === "완료");
   const ownerButtons = IS_OWNER ? `
+    <button class="bulk-btn" style="background:var(--steel)" ${oneDoneSelected?"":"disabled"} onclick="doSelectedStatement('${key}')">📄 거래명세서 쓰기</button>
     <button class="bulk-btn" ${selCount===0?"disabled":""} onclick="doBulkComplete('${key}')">✅ 선택 ${selCount}건 납품처리</button>
     <button class="bulk-btn" style="background:#8A8A8A" ${selCount===0?"disabled":""} onclick="doUndoComplete('${key}')">↩️ 선택 ${selCount}건 납품취소</button>
     <button class="bulk-btn" style="background:var(--wait)" ${selCount===0?"disabled":""} onclick="doBulkSettle('${key}')">💰 선택 ${selCount}건 정산완료</button>
@@ -680,9 +683,7 @@ function doPartial(key, rowIndex, totalQty) {
   google.script.run.withSuccessHandler((res) => {
     DATA[key] = res.rows;
     renderStats(); renderTab(key); renderMonthly();
-    if (res.statementUrl) showToast(`${n}개 부분 납품처리 + 거래명세서 생성했습니다.`, res.statementUrl);
-    else if (res.statementError) showToast(`${n}개 부분 납품처리했습니다 (거래명세서 생성 실패: ${res.statementError})`);
-    else showToast(`${n}개 부분 납품처리했습니다 (나머지 ${totalQty-n}개는 그대로 남아있어요)`);
+    showToast(`${n}개 부분 납품처리했습니다 (나머지 ${totalQty-n}개는 그대로 남아있어요)`);
   }).withFailureHandler((e) => showToast("오류: " + e.message)).partialComplete(key, rowIndex, n, ADMIN_PW);
 }
 function doPartialSettle(key, rowIndex, totalQty) {
@@ -702,14 +703,22 @@ function doBulkComplete(key) {
   google.script.run.withSuccessHandler((res) => {
     DATA[key] = res.rows; selected[key] = new Set();
     renderStats(); renderTab(key); renderMonthly();
-    if (res.statementUrl) {
-      showToast(`${ids.length}건 납품완료 처리 + 거래명세서 생성했습니다.`, res.statementUrl);
-    } else if (res.statementError) {
-      showToast(`${ids.length}건 납품완료 처리했습니다 (거래명세서 생성 실패: ${res.statementError})`);
-    } else {
-      showToast(`${ids.length}건 납품완료 처리했습니다 (TEMPLATE_SHEET_ID 미설정)`);
-    }
+    showToast(`${ids.length}건 납품완료 처리했습니다`);
   }).withFailureHandler((e) => showToast("오류: " + e.message)).bulkComplete(key, ids, ADMIN_PW);
+}
+function doSelectedStatement(key) {
+  const ids = [...selected[key]];
+  if (ids.length !== 1) return showToast("납품완료 건 하나만 선택해 주세요");
+  doWriteStatement(key, ids[0]);
+}
+function doWriteStatement(key, rowIndex) {
+  const row = DATA[key].find(r => r.rowIndex === rowIndex);
+  if (!row || row.status !== "완료") return showToast("납품완료 건을 선택해 주세요");
+  if (!confirm(`${row.id} / ${row.item}\n이 건의 거래명세서를 작성할까요?`)) return;
+  google.script.run.withSuccessHandler((res) => {
+    selected[key].clear(); renderTab(key);
+    showToast("거래명세서를 작성했습니다", res.statementUrl);
+  }).withFailureHandler((e) => showToast("오류: " + e.message)).writeStatement(key, rowIndex, ADMIN_PW);
 }
 function doBulkSettle(key) {
   const ids = [...selected[key]];
@@ -873,6 +882,7 @@ function openAddModal(defaultKey) {
   document.getElementById("addModalTitle").textContent = "➕ 새 건 등록";
   document.getElementById("f_gubun_field").style.display = "";
   document.getElementById("f_status_field").style.display = "";
+  document.getElementById("f_doneDate_field").style.display = "none";
   document.getElementById("f_gubun").disabled = false;
   document.getElementById("f_gubun").value = defaultKey;
   ["f_id","f_vud","f_line","f_process","f_eqp","f_item","f_price","f_dueDate","f_owner","f_note"].forEach(id => document.getElementById(id).value = "");
@@ -892,6 +902,8 @@ function openEditModal(key, rowIndex) {
   // 구분/상태는 수정 화면에서 바꾸지 않음 (구분은 시트 이동이 필요해서, 상태는 납품처리/취소 버튼으로만 변경)
   document.getElementById("f_gubun_field").style.display = "none";
   document.getElementById("f_status_field").style.display = "none";
+  document.getElementById("f_doneDate_field").style.display = row.status === "완료" ? "" : "none";
+  document.getElementById("f_doneDate").value = row.doneDate || "";
   document.getElementById("f_id").value = row.id || "";
   document.getElementById("f_vud").value = row.vud || "";
   document.getElementById("f_line").value = row.line || "";
@@ -899,7 +911,7 @@ function openEditModal(key, rowIndex) {
   document.getElementById("f_eqp").value = row.eqp || "";
   document.getElementById("f_item").value = row.item || "";
   document.getElementById("f_qty").value = row.qty || 1;
-  document.getElementById("f_price").value = row.price || "";
+  document.getElementById("f_price").value = row.price === "" || row.price == null ? "" : row.price;
   document.getElementById("f_orderDate").value = row.orderDate || "";
   document.getElementById("f_dueDate").value = row.dueDate || "";
   document.getElementById("f_owner").value = row.owner || "";
@@ -918,6 +930,7 @@ function submitAdd() {
     line: document.getElementById("f_line").value.trim(),
     process: document.getElementById("f_process").value.trim(),
     eqp: document.getElementById("f_eqp").value.trim(),
+    sn: editState ? editState.original.sn : "",
     item: document.getElementById("f_item").value.trim(),
     qty: Number(document.getElementById("f_qty").value) || 0,
     price: document.getElementById("f_price").value === "" ? "" : Number(document.getElementById("f_price").value),
@@ -926,7 +939,7 @@ function submitAdd() {
     dueDate: document.getElementById("f_dueDate").value,
     owner: document.getElementById("f_owner").value.trim(),
     status: editState ? editState.original.status : document.getElementById("f_status").value,
-    doneDate: editState ? editState.original.doneDate : "",
+    doneDate: editState && editState.original.status === "완료" ? document.getElementById("f_doneDate").value : "",
     billing: editState ? editState.original.billing : "",
     note: document.getElementById("f_note").value.trim(),
   };
