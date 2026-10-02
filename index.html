@@ -167,6 +167,13 @@
   .wrap { max-width:none; margin:0; }
   @media (max-width:900px){.sidebar{width:180px;flex-basis:180px}.main-area{padding:16px}.dashboard-grid{grid-template-columns:repeat(2,1fr)}.dashboard-cols{grid-template-columns:1fr}}
   @media (max-width:640px){.app-shell{display:block}.sidebar{display:none}.mobile-nav{display:flex;position:sticky;top:0;z-index:30;background:#1F2937;padding:8px;gap:5px;overflow:auto}.mobile-nav .nav-btn{white-space:nowrap;width:auto}.main-area{padding:12px}.dashboard-grid{grid-template-columns:1fr 1fr}.topbar{align-items:flex-start;flex-direction:column}.top-actions{justify-content:flex-start}.form-grid{grid-template-columns:1fr}.full{grid-column:auto}.settings-mobile{display:inline-flex}}
+
+.settlement-layout{display:flex;gap:16px;align-items:flex-start}.settlement-layout>.panel{flex:1;min-width:0}
+.settlement-panel{width:320px;flex-shrink:0;position:sticky;top:16px;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:18px;box-sizing:border-box}
+.settlement-panel h2{margin:0 0 10px;font-size:20px}.settlement-hint{font-size:12px;color:var(--sub)}
+.settlement-items{max-height:40vh;overflow:auto}.settlement-item{padding:10px 0;border-bottom:1px solid var(--line);overflow-wrap:anywhere}.settlement-item button{float:right}.settlement-panel button,.cart-add{cursor:pointer;border:1px solid var(--line);border-radius:6px;padding:7px 10px}.settlement-panel button:disabled,.cart-add:disabled{opacity:.5;cursor:default}
+.settlement-panel>.row{margin-top:14px;flex-wrap:wrap}.settlement-error{color:#B3441F}.settlement-report{margin-top:16px;max-height:35vh;overflow:auto;font-size:12px}.settlement-report summary{cursor:pointer;font-weight:700}
+@media(max-width:900px){.settlement-layout{display:block}.settlement-panel{width:100%;position:sticky;bottom:0;top:auto;z-index:5;margin-top:14px;box-shadow:0 -4px 14px #0002}.settlement-items{max-height:22vh}.settlement-report{max-height:20vh}.settlement-panel{padding:12px}.settlement-panel h2{font-size:17px}.settlement-panel p{margin:7px 0}}
 </style>
 </head>
 <body>
@@ -332,6 +339,95 @@ const tabState = {
 };
 let selected = { mt: new Set(), gas: new Set() };
 let currentTab = "dashboard";
+const settlementCart = new Map();
+let settlementReport = [], settlementBusy = false;
+function settlementId(key, rowIndex) { return key + ':' + rowIndex; }
+function cartEligible(r) {
+  return r.status === '완료' && r.billing !== '완료' && r.qty !== '' && r.price !== '' && r.amount !== '' && Number(r.qty) > 0 && Number.isFinite(Number(r.price)) && Number(r.price) >= 0 && Number(r.amount) === Number(r.qty) * Number(r.price);
+}
+function refreshSettlementViews() { renderTab('mt'); renderTab('gas'); }
+function addToSettlement(key, rowIndex) {
+  if (!IS_OWNER || settlementBusy) return;
+  const row = DATA[key].find(r => r.rowIndex === rowIndex);
+  if (!row || !cartEligible(row)) return showToast('납품완료·미정산 상태와 수량·단가·금액을 확인해 주세요');
+  const checks = settlementReport.filter(x => x.key === key && x.row && x.row.rowIndex === rowIndex);
+  if (checks.some(x => x.errors.length)) return showToast('업체 리스트 오류 건은 정산함에 담을 수 없습니다');
+  settlementCart.set(settlementId(key, rowIndex), {key, rowIndex, row: {...row}, snapshot: JSON.stringify(row), ...(checks[0] ? {entry: checks[0].entry, snapshot: checks[0].snapshot} : {})});
+  refreshSettlementViews();
+}
+function removeFromSettlement(id) { if (!settlementBusy) { settlementCart.delete(id); refreshSettlementViews(); } }
+function clearSettlement() { if (!settlementBusy) { settlementCart.clear(); refreshSettlementViews(); } }
+function resetSettlementReport() { if (!settlementBusy) { settlementReport = []; settlementCart.clear(); refreshSettlementViews(); } }
+function settlementPanelHtml() {
+  if (!IS_OWNER) return '';
+  const items = [...settlementCart.entries()];
+  const sum = items.reduce((n, [, x]) => n + Number(x.row.amount), 0);
+  const errors = settlementReport.filter(x => x.errors.length);
+  return `<aside class="settlement-panel" aria-label="이번 정산"><h2>이번 정산</h2><p>선택 <b>${items.length}건</b> / 합계 <b>${won(sum)}</b></p><p class="settlement-hint">담기와 빼기는 임시 선택입니다. 최종 확인 후 정산합니다.</p><div class="settlement-items">${items.map(([id,x]) => `<div class="settlement-item"><b>${esc(x.row.id)}</b><div>${esc(x.row.item)}</div><div>${won(x.row.amount)} <button ${settlementBusy?'disabled':''} onclick="removeFromSettlement('${id}')">빼기</button></div></div>`).join('') || '<p>목록에서 → 정산함을 눌러 담으세요.</p>'}</div><div class="row"><button ${settlementBusy?'disabled':''} onclick="clearSettlement()">모두 되돌리기</button><button class="btn-primary" ${!items.length||settlementBusy?'disabled':''} onclick="finalizeSettlement()">${settlementBusy?'처리 중…':'최종 정산하기'}</button></div>${settlementReport.length ? `<details class="settlement-report" ${errors.length?'open':''}><summary>업체 대조 ${settlementReport.length}건 · 정상 ${settlementReport.length-errors.length}건 · 오류 ${errors.length}건</summary>${settlementReport.map(x=>`<div class="settlement-item ${x.errors.length?'settlement-error':''}"><b>${esc(x.entry.id)}</b> ${esc(x.entry.item)}<div>${esc(x.errors.join(' / ') || '정상')}</div><div>업체 ${esc(x.entry.qty)}개 × ${esc(x.entry.price)}원${x.row ? `<br>YHT ${esc(x.row.qty)}개 × ${esc(x.row.price)}원` : ''}</div><small>${esc(x.entry.source)}</small></div>`).join('')}<button onclick="resetSettlementReport()" ${settlementBusy?'disabled':''}>대조 종료 / 임시 선택 비우기</button></details>`:''}</aside>`;
+}
+function finalizeSettlement() {
+  if (settlementBusy || !IS_OWNER || !settlementCart.size) return;
+  const items = [...settlementCart.values()];
+  const sum = items.reduce((n,x) => n + Number(x.row.amount),0);
+  if (!confirm(`${items.length}건 / ${won(sum)}을 정산 처리하시겠습니까?`)) return;
+  settlementBusy = true; refreshSettlementViews();
+  google.script.run.withSuccessHandler(res => {
+    DATA.mt = res.mt; DATA.gas = res.gas; settlementCart.clear(); settlementReport = []; settlementBusy = false;
+    selected.mt.clear(); selected.gas.clear(); renderStats(); refreshSettlementViews(); renderMonthly();
+    showToast(`${items.length}건 정산완료 처리했습니다`);
+  }).withFailureHandler(e => { settlementBusy = false; refreshSettlementViews(); showToast('오류: '+e.message); }).commitSettlement(items.map(({key,rowIndex,snapshot,entry})=>({key,rowIndex,snapshot,entry})), false, ADMIN_PW);
+}
+function cancelSettlement(key) {
+  if (settlementBusy || !IS_OWNER) return;
+  const rows = DATA[key].filter(r => selected[key].has(r.rowIndex));
+  if (!rows.length || rows.some(r => r.billing !== '완료')) return showToast('정산완료 건만 선택해 주세요');
+  if (!confirm(`${rows.length}건 / ${won(rows.reduce((s,r)=>s+Number(r.amount||0),0))}의 정산을 취소하고 미정산으로 되돌릴까요?`)) return;
+  settlementBusy = true; refreshSettlementViews();
+  google.script.run.withSuccessHandler(res => {
+    DATA.mt=res.mt; DATA.gas=res.gas; selected[key].clear(); settlementBusy=false; settlementCart.clear(); settlementReport=[];
+    renderStats(); refreshSettlementViews(); renderMonthly(); showToast(`${rows.length}건 정산을 취소했습니다`);
+  }).withFailureHandler(e=>{settlementBusy=false;refreshSettlementViews();showToast('오류: '+e.message);}).commitSettlement(rows.map(row=>({key,rowIndex:row.rowIndex,snapshot:JSON.stringify(row)})),true,ADMIN_PW);
+}
+function parseSettlementWorkbook(workbook) {
+  const aliases = {id:['관리번호','의뢰번호','의뢰no','의뢰번호no','as번호'], item:['품목','품목명','작업내용','제품명','자재명','내용'],qty:['수량','정산수량'],price:['단가','정산단가','공급단가']};
+  const normalize = v => String(v||'').normalize('NFKC').toLowerCase().replace(/[\s._\-()/]/g,'');
+  const entries=[];
+  workbook.SheetNames.forEach(name=>{
+    const rows=XLSX.utils.sheet_to_json(workbook.Sheets[name],{header:1,defval:'',raw:true});
+    let columns=null;
+    rows.forEach((cells,index)=>{
+      const found={};
+      Object.keys(aliases).forEach(k=>{found[k]=cells.findIndex(v=>aliases[k].includes(normalize(v)));});
+      if(Object.values(found).every(i=>i>=0)){columns=found;return;}
+      if(!columns || !cells.some(v=>v!==''))return;
+      const entry={source:name+' '+(index+1)+'행'};
+      Object.keys(aliases).forEach(k=>entry[k]=cells[columns[k]]??'');
+      if(!entry.id && !entry.item)return;
+      if(!entry.id && /합계|총계|소계/.test(String(entry.item)))return;
+      entries.push(entry);
+    });
+  });
+  if(!entries.length)throw new Error('관리번호(의뢰 NO)·품목·수량·단가 헤더가 있는 표를 찾지 못했습니다. 헤더를 확인해 주세요.');
+  if(entries.length>5000)throw new Error('한 번에 5000건 이하의 리스트를 올려 주세요.');
+  return entries;
+}
+async function uploadSettlement(file) {
+  if(settlementBusy || !IS_OWNER)return;
+  if(settlementCart.size && !confirm('새 리스트를 대조하면 기존 임시 선택을 비웁니다. 계속할까요?'))return;
+  settlementBusy=true;refreshSettlementViews();showToast('정산리스트 대조 중…');
+  try {
+    if(file.size>15*1024*1024)throw new Error('15MB 이하의 엑셀 파일을 올려 주세요.');
+    await ensureXlsx();
+    const entries=parseSettlementWorkbook(XLSX.read(await file.arrayBuffer(),{type:'array'}));
+    google.script.run.withSuccessHandler(results=>{
+      settlementReport=results;settlementCart.clear();settlementBusy=false;
+      results.filter(x=>!x.errors.length).forEach(x=>settlementCart.set(settlementId(x.key,x.row.rowIndex),{key:x.key,rowIndex:x.row.rowIndex,row:x.row,snapshot:x.snapshot,entry:x.entry}));
+      switchTab(results.find(x=>x.key)?.key || 'mt');refreshSettlementViews();
+      showToast(`정상 ${settlementCart.size}건을 임시 담았습니다. 오류 건은 정산에서 제외됩니다.`);
+    }).withFailureHandler(e=>{settlementBusy=false;refreshSettlementViews();showToast('오류: '+e.message);}).previewSettlement(entries,ADMIN_PW);
+  }catch(e){settlementBusy=false;refreshSettlementViews();showToast('오류: '+e.message);}
+}
+
 
 const THEME_KEY = "yht_theme";
 function setTheme(theme) {
@@ -611,11 +707,12 @@ function visibleRows(key) {
   let r = DATA[key];
   if (st.search) {
     const q = st.search.toLowerCase();
-    r = r.filter(x => String(x.id||"").toLowerCase().includes(q));
+    r = r.filter(x => [x.id,x.item,x.owner,x.vud].some(v => String(v||"").toLowerCase().includes(q)));
   }
   if (st.filterMode === "inprogress") r = r.filter(x => x.status !== "완료");
   if (st.filterMode === "done") r = r.filter(x => x.status === "완료");
   if (st.filterMode === "unsettled") r = r.filter(x => x.status === "완료" && x.billing !== "완료");
+  if (st.filterMode === "settled") r = r.filter(x => x.billing === "완료");
   return r;
 }
 
@@ -647,9 +744,10 @@ function cardHtml(key, r) {
   const partialBtn = (IS_OWNER && r.status !== "완료" && Number(r.qty) > 1)
     ? `<button onclick="doPartial('${key}', ${r.rowIndex}, ${Number(r.qty)})" style="border:none;background:none;cursor:pointer;font-size:11px;padding:0 2px;color:#3E6E8E" title="일부 수량만 납품처리">➗부분납품</button>`
     : "";
-  const partialSettleBtn = (IS_OWNER && r.status === "완료" && r.billing !== "완료" && Number(r.qty) > 1)
-    ? `<button onclick="doPartialSettle('${key}', ${r.rowIndex}, ${Number(r.qty)})" style="border:none;background:none;cursor:pointer;font-size:11px;padding:0 2px;color:#8A7A4E" title="일부 수량만 정산완료">➗부분정산</button>`
-    : "";
+  const cartId = settlementId(key, r.rowIndex);
+  const reportError = settlementReport.some(x=>x.key===key && x.row && x.row.rowIndex===r.rowIndex && x.errors.length);
+  const partialSettleBtn = IS_OWNER && r.status === '완료' && r.billing !== '완료'
+    ? `<button class="cart-add" onclick="addToSettlement('${key}', ${r.rowIndex})" ${settlementBusy||settlementCart.has(cartId)||reportError||!cartEligible(r)?'disabled':''}>${settlementCart.has(cartId)?'담김':'→ 정산함'}</button>` : '';
   const billingExtra = (r.status==="완료" && r.billing!=="완료" && r.doneDate) ? ` <span style="font-size:9px">(${daysSince(r.doneDate)}일)</span>` : "";
   const billingColor = flagged ? "color:#B3441F;font-weight:700" : pending ? "color:#8A7A4E" : "color:#6B7280";
   const meta = [
@@ -693,7 +791,7 @@ function renderTab(key) {
   const keys = Object.keys(groups).sort().reverse();
   const body = keys.map(k => `<div class="month-header">${monthLabel(k)} (${groups[k].length}건)</div>` + groups[k].map(r=>cardHtml(key,r)).join("")).join("");
 
-  const filters = [["all","전체"],["inprogress","진행중만"],["done","납품완료만"],["unsettled","미정산만"]];
+  const filters = [["all","전체"],["inprogress","진행중만"],["done","납품완료만"],["unsettled","미정산만"],["settled","정산완료만"]];
   const filterHtml = filters.map(([id,label]) => `<button class="filter-btn ${st.filterMode===id?'active':''}" onclick="setFilter('${key}','${id}')">${label}</button>`).join("");
   const selCount = selected[key].size;
   const canComplete = st.filterMode !== "done" && selCount > 0 && [...selected[key]].every(id => DATA[key].some(r => r.rowIndex === id && r.status !== "완료"));
@@ -702,16 +800,17 @@ function renderTab(key) {
     <button class="bulk-btn" style="background:var(--steel)" ${doneSelected?"":"disabled"} onclick="doSelectedStatement('${key}')">📄 선택 ${selCount}건 거래명세서 쓰기</button>
     <button class="bulk-btn" ${canComplete?"":"disabled"} onclick="doBulkComplete('${key}')">✅ 선택 ${selCount}건 납품처리</button>
     <button class="bulk-btn" style="background:#8A8A8A" ${selCount===0?"disabled":""} onclick="doUndoComplete('${key}')">↩️ 선택 ${selCount}건 납품취소</button>
-    <button class="bulk-btn" style="background:var(--wait)" ${selCount===0?"disabled":""} onclick="doBulkSettle('${key}')">💰 선택 ${selCount}건 정산완료</button>
+    <button class="bulk-btn" style="background:var(--wait)" ${selCount===0||settlementBusy?"disabled":""} onclick="doBulkSettle('${key}')">→ 선택 ${selCount}건 정산함</button>
+    <button class="bulk-btn" ${settlementBusy||!selCount||![...selected[key]].every(id=>DATA[key].some(r=>r.rowIndex===id&&r.billing==="완료"))?"disabled":""} onclick="cancelSettlement('${key}')">↩ 정산 취소</button>
     <button class="bulk-btn" style="background:var(--danger)" ${selCount===0?"disabled":""} onclick="doDelete('${key}')">🗑️ 선택 ${selCount}건 삭제</button>
     <button class="bulk-btn" style="background:#6B5B95" onclick="openAddModal('${key}')">➕ 등록</button>
   ` : "";
 
   document.getElementById("tab-" + key).innerHTML = `
-    <div class="panel">
+    <div class="settlement-layout"><div class="panel">
       <div class="toolbar">
         <div class="row">
-          <input type="text" placeholder="🔍 관리번호 검색" value="${esc(st.search)}" oninput="setSearch('${key}', this.value)" style="flex:1;min-width:150px">
+          <input type="text" placeholder="🔍 관리번호 / 품목 / 담당자 검색" value="${esc(st.search)}" oninput="setSearch('${key}', this.value)" style="flex:1;min-width:150px">
           ${monthSelectHtml(key, allVisible)}
         </div>
         <div class="row" style="justify-content:space-between">
@@ -721,7 +820,7 @@ function renderTab(key) {
       </div>
       <div class="card-list">${body || '<div class="empty">해당하는 건이 없습니다</div>'}</div>
       ${!IS_OWNER ? '<div class="lock-note">👀 보기 전용 계정입니다. 등록/수정은 관리자만 가능해요.</div>' : ''}
-    </div>
+    </div>${settlementPanelHtml()}</div>
   `;
 }
 
@@ -808,17 +907,6 @@ function doPartial(key, rowIndex, totalQty) {
     showToast(`${n}개 부분 납품처리했습니다 (나머지 ${totalQty-n}개는 그대로 남아있어요)`);
   }).withFailureHandler((e) => showToast("오류: " + e.message)).partialComplete(key, rowIndex, n, ADMIN_PW);
 }
-function doPartialSettle(key, rowIndex, totalQty) {
-  const input = prompt(`전체 ${totalQty}개 중 몇 개를 지금 정산완료 처리할까요? (1~${totalQty-1})`);
-  if (input === null) return;
-  const n = Number(input);
-  if (!n || n < 1 || n >= totalQty) { showToast(`1개 이상, ${totalQty}개 미만으로 입력해주세요`); return; }
-  google.script.run.withSuccessHandler((rows) => {
-    DATA[key] = rows;
-    renderStats(); renderTab(key); renderMonthly();
-    showToast(`${n}개 부분 정산완료 처리했습니다 (나머지 ${totalQty-n}개는 미정산으로 남아있어요)`);
-  }).withFailureHandler((e) => showToast("오류: " + e.message)).partialSettle(key, rowIndex, n, ADMIN_PW);
-}
 function doBulkComplete(key) {
   const ids = [...selected[key]];
   if (!ids.length) return;
@@ -844,13 +932,8 @@ function doSelectedStatement(key) {
   }).withFailureHandler((e) => showToast("오류: " + e.message)).writeStatement(key, ids, ADMIN_PW);
 }
 function doBulkSettle(key) {
-  const ids = [...selected[key]];
-  if (!ids.length) return;
-  google.script.run.withSuccessHandler((rows) => {
-    DATA[key] = rows; selected[key] = new Set();
-    renderStats(); renderTab(key); renderMonthly();
-    showToast(`${ids.length}건 정산완료 처리했습니다`);
-  }).withFailureHandler((e) => showToast("오류: " + e.message)).bulkSettle(key, ids, ADMIN_PW);
+  [...selected[key]].forEach(id=>addToSettlement(key,id));
+  selected[key].clear(); refreshSettlementViews();
 }
 
 const HEADER_KEYWORDS = ["의뢰번호","VUD","라인","공정","설비호기","제품","수량","담당자","품목","자재발주","수주","단가","합계","비고","관리번호","PO","납품"];
@@ -1136,20 +1219,8 @@ settlementFileInput.style.display = "none";
 document.body.appendChild(settlementFileInput);
 document.getElementById("importSettlementBtn").onclick = () => settlementFileInput.click();
 settlementFileInput.onchange = (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-  showToast("정산리스트 읽는 중...");
-  const reader = new FileReader();
-  reader.onload = () => {
-    const base64 = reader.result.split(",")[1];
-    google.script.run.withSuccessHandler((res) => {
-      DATA.mt = res.mt; DATA.gas = res.gas;
-      renderStats(); renderTab("mt"); renderTab("gas"); renderMonthly();
-      showToast(`정산리스트에서 ${res.totalIdsInFile}개 의뢰번호 확인 → ${res.matched}건 정산완료로 매칭했습니다`);
-    }).withFailureHandler((e2) => showToast("오류: " + e2.message)).importSettlementList(base64, file.name, ADMIN_PW);
-  };
-  reader.readAsDataURL(file);
-  settlementFileInput.value = "";
+  const file=e.target.files[0]; settlementFileInput.value='';
+  if(file) uploadSettlement(file);
 };
 
 document.querySelectorAll(".nav-btn[data-tab]").forEach(b => { b.onclick = () => switchTab(b.dataset.tab); });
