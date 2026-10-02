@@ -389,7 +389,7 @@ function cancelSettlement(key) {
   }).withFailureHandler(e=>{settlementBusy=false;refreshSettlementViews();showToast('오류: '+e.message);}).commitSettlement(rows.map(row=>({key,rowIndex:row.rowIndex,snapshot:JSON.stringify(row)})),true,ADMIN_PW);
 }
 function parseSettlementWorkbook(workbook) {
-  const aliases = {id:['관리번호','의뢰번호','의뢰no','의뢰번호no','as번호'], item:['품목','품목명','작업내용','제품명','자재명','내용'],qty:['수량','정산수량'],price:['단가','정산단가','공급단가']};
+  const aliases = {id:['관리번호','의뢰번호','의뢰no','의뢰번호no','as번호'], item:['품목','품목명','작업내용','조치내용','제품명','자재명','내용'],qty:['수량','정산수량'],price:['단가','정산단가','공급단가','자재비단가']};
   const normalize = v => String(v||'').normalize('NFKC').toLowerCase().replace(/[\s._\-()/]/g,'');
   const entries=[];
   workbook.SheetNames.forEach(name=>{
@@ -402,6 +402,8 @@ function parseSettlementWorkbook(workbook) {
       if(!columns || !cells.some(v=>v!==''))return;
       const entry={source:name+' '+(index+1)+'행'};
       Object.keys(aliases).forEach(k=>entry[k]=cells[columns[k]]??'');
+      // 표 사이 제목·합계·서명은 정산 항목이 아니다. 수량/단가가 있는 미등록 행은 대조 오류로 남긴다.
+      if(!entry.id && entry.qty === '' && entry.price === '')return;
       if(!entry.id && !entry.item)return;
       if(!entry.id && /합계|총계|소계/.test(String(entry.item)))return;
       entries.push(entry);
