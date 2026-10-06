@@ -177,7 +177,12 @@
 /* Approved order-list table: all desktop columns fit the available width. */
 .orders-layout{display:block}
 .orders-layout>.settlement-panel{width:100%;position:static;margin-top:16px}
-.orders-list{padding:12px;max-height:none;overflow:visible}
+.orders-list{padding:12px;max-height:68vh;overflow-y:auto;overflow-x:hidden}
+.order-page-controls{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:12px}
+.order-pagination{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:12px;border-top:1px solid var(--line);font-size:12px;color:var(--sub)}
+.order-pagination button:disabled{opacity:.4;cursor:default}
+.order-page-controls button[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+@media(max-width:700px){.order-page-controls button,.order-pagination button{min-height:44px}}
 .orders-table{width:100%;table-layout:fixed;border-collapse:collapse;font-size:12px;margin-bottom:18px}
 .orders-table th,.orders-table td{border:1px solid var(--line);padding:10px 4px;vertical-align:middle;overflow-wrap:anywhere}
 .orders-table th{background:var(--steel-soft);color:var(--ink);font-size:11px;font-weight:600;text-align:center}
@@ -369,8 +374,8 @@ let TODAY = "";
 const ADMIN_PW_KEY = "yht_admin_pw"; // 브라우저에 저장해두는 키 (구글 로그인과 무관)
 let ADMIN_PW = localStorage.getItem(ADMIN_PW_KEY) || "";
 const tabState = {
-  mt: { filterMode: "all", search: "", month: "전체" },
-  gas: { filterMode: "all", search: "", month: "전체" },
+  mt: { filterMode: "all", search: "", month: "전체", pageSize:30, page:1 },
+  gas: { filterMode: "all", search: "", month: "전체", pageSize:30, page:1 },
 };
 let selected = { mt: new Set(), gas: new Set() };
 let currentTab = "dashboard";
@@ -763,9 +768,9 @@ function monthSelectHtml(key, rowsForCount) {
   return `<select onchange="setMonth('${key}', this.value)">${opts}</select>`;
 }
 
-function setMonth(key, v) { tabState[key].month = v; selected[key].clear(); renderTab(key); }
-function setFilter(key, v) { tabState[key].filterMode = v; selected[key].clear(); renderTab(key); }
-function setSearch(key, v) { tabState[key].search = v; renderTab(key); }
+function setMonth(key, v) { tabState[key].month = v; tabState[key].page=1; selected[key].clear(); renderTab(key); }
+function setFilter(key, v) { tabState[key].filterMode = v; tabState[key].page=1; selected[key].clear(); renderTab(key); }
+function setSearch(key, v) { tabState[key].search = v; tabState[key].page=1; selected[key].clear(); renderTab(key); }
 function toggleSelect(key, rowIndex) {
   const s = selected[key];
   if (s.has(rowIndex)) s.delete(rowIndex); else s.add(rowIndex);
@@ -846,14 +851,32 @@ function cardHtml(key, r) {
   </div>`;
 }
 
+function setOrderPageSize(key,size){
+  if(![10,30,50,100].includes(size))return;
+  tabState[key].pageSize=size;tabState[key].page=1;selected[key].clear();renderTab(key);
+}
+function setOrderPage(key,page){
+  tabState[key].page=Math.max(1,page);selected[key].clear();renderTab(key);
+}
+function paginateOrders(rows,size,page){
+  const pages=Math.max(1,Math.ceil(rows.length/size));
+  const current=Math.min(pages,Math.max(1,page||1));
+  const start=(current-1)*size;
+  return {rows:rows.slice(start,start+size),pages,page:current,start,end:Math.min(rows.length,start+size)};
+}
 function renderTab(key) {
   const st = tabState[key];
   const allVisible = visibleRows(key);
   const filtered = st.month === "전체" ? allVisible : allVisible.filter(r => monthKeyOf(r) === st.month);
   const groups = {};
-  filtered.forEach(r => { const k = monthKeyOf(r); (groups[k] = groups[k]||[]).push(r); });
+  const monthCounts={};
+  filtered.forEach(r=>{const k=monthKeyOf(r);monthCounts[k]=(monthCounts[k]||0)+1;});
+  const ordered=filtered.slice().sort((a,b)=>monthKeyOf(b).localeCompare(monthKeyOf(a)));
+  const pagination=paginateOrders(ordered,st.pageSize,st.page);
+  st.page=pagination.page;
+  pagination.rows.forEach(r => { const k = monthKeyOf(r); (groups[k] = groups[k]||[]).push(r); });
   const keys = Object.keys(groups).sort().reverse();
-  const body = keys.map(k => `<div class="month-header">${monthLabel(k)} (${groups[k].length}건)</div>` + orderTableHtml(key,groups[k])).join("");
+  const body = keys.map(k => `<div class="month-header">${monthLabel(k)} (${monthCounts[k]}건)</div>` + orderTableHtml(key,groups[k])).join("");
 
   const filters = [["all","전체"],["inprogress","진행중만"],["done","납품완료만"],["unsettled","미정산만"],["settled","정산완료만"]];
   const filterHtml = filters.map(([id,label]) => `<button class="filter-btn ${st.filterMode===id?'active':''}" onclick="setFilter('${key}','${id}')">${label}</button>`).join("");
@@ -881,6 +904,7 @@ function renderTab(key) {
         <div class="row">
           <input type="text" placeholder="🔍 관리번호 / 품목 / 담당자 검색" value="${esc(st.search)}" oninput="setSearch('${key}', this.value)" style="flex:1;min-width:150px">
           ${monthSelectHtml(key, allVisible)}
+          <div class="order-page-controls" aria-label="수주목록 표시 건수">${[10,30,50,100].map(size=>`<button class="filter-btn" aria-pressed="${st.pageSize===size}" onclick="setOrderPageSize('${key}',${size})">${size}건 보기</button>`).join('')}</div>
         </div>
         <div class="row" style="justify-content:space-between">
           <div class="filters">${filterHtml}</div>
@@ -888,7 +912,8 @@ function renderTab(key) {
         </div>
       </div>
       <div class="orders-list">${body || '<div class="empty">해당하는 건이 없습니다</div>'}</div>
-      ${!IS_OWNER ? '<div class="lock-note">👀 보기 전용 계정입니다. 등록/수정은 관리자만 가능해요.</div>' : ''}
+      <div class="order-pagination"><span>전체 ${filtered.length}건 · ${filtered.length?pagination.start+1:0}–${pagination.end}건 표시</span><div class="row"><button class="filter-btn" ${st.page===1?'disabled':''} onclick="setOrderPage('${key}',${st.page-1})">이전</button><span>${st.page} / ${pagination.pages} 페이지</span><button class="filter-btn" ${st.page===pagination.pages?'disabled':''} onclick="setOrderPage('${key}',${st.page+1})">다음</button></div></div>
+${!IS_OWNER ? '<div class="lock-note">👀 보기 전용 계정입니다. 등록/수정은 관리자만 가능해요.</div>' : ''}
     </div>${settlementPanelHtml()}</div>
   `;
 }

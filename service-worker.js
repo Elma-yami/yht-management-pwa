@@ -1,4 +1,4 @@
-const CACHE_NAME = 'yht-pwa-shell-v10-order-table';
+const CACHE_NAME = 'yht-pwa-shell-v11-order-pagination';
 const APP_FILES = ['/', '/index.html', '/manifest.json', '/icons/icon-192.png', '/icons/icon-512.png'];
 
 self.addEventListener('install', event => {
