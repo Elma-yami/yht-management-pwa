@@ -1,4 +1,4 @@
-const CACHE_NAME = 'yht-pwa-shell-v14-filter-actions';
+const CACHE_NAME = 'yht-pwa-shell-v15-scroll-position';
 const APP_FILES = ['/', '/index.html', '/manifest.json', '/icons/icon-192.png', '/icons/icon-512.png'];
 
 self.addEventListener('install', event => {

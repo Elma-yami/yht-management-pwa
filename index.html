@@ -867,6 +867,17 @@ function paginateOrders(rows,size,page){
 }
 function renderTab(key) {
   const st = tabState[key];
+  const container=document.getElementById('tab-'+key);
+  const viewKey=JSON.stringify([st.filterMode,st.search,st.month,st.pageSize,st.page]);
+  const sameView=container.dataset.orderView===viewKey;
+  const oldList=container.querySelector('.orders-list');
+  const listScroll=sameView&&oldList?oldList.scrollTop:0;
+  const pageScroll={x:window.scrollX,y:window.scrollY};
+  const openDetails=sameView?[...container.querySelectorAll('.orders-mobile details')].map(d=>d.open):[];
+  const active=document.activeElement;
+  const restoreSearch=container.contains(active)&&active.matches('input[type="text"]');
+  const restoreCheckbox=container.contains(active)&&active.matches('input[type="checkbox"]')?active.getAttribute('aria-label'):null;
+  const caret=restoreSearch?{start:active.selectionStart,end:active.selectionEnd}:null;
   const allVisible = visibleRows(key);
   const filtered = st.month === "전체" ? allVisible : allVisible.filter(r => monthKeyOf(r) === st.month);
   const groups = {};
@@ -917,6 +928,15 @@ function renderTab(key) {
 ${!IS_OWNER ? '<div class="lock-note">👀 보기 전용 계정입니다. 등록/수정은 관리자만 가능해요.</div>' : ''}
     </div>${settlementPanelHtml()}</div>
   `;
+  container.dataset.orderView=JSON.stringify([st.filterMode,st.search,st.month,st.pageSize,st.page]);
+  container.querySelectorAll('.orders-mobile details').forEach((d,i)=>d.open=!!openDetails[i]);
+  let nextFocus=null;
+  if(restoreSearch)nextFocus=container.querySelector('input[type="text"]');
+  else if(restoreCheckbox)nextFocus=[...container.querySelectorAll('input[type="checkbox"]')].find(input=>input.getAttribute('aria-label')===restoreCheckbox&&input.getClientRects().length);
+  if(nextFocus){nextFocus.focus({preventScroll:true});if(caret)nextFocus.setSelectionRange(caret.start,caret.end);}
+  const newList=container.querySelector('.orders-list');
+  if(newList)newList.scrollTop=listScroll;
+  window.scrollTo(pageScroll.x,pageScroll.y);
 }
 
 function renderMonthly() {
