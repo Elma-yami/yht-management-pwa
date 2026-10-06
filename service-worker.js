@@ -1,4 +1,4 @@
-const CACHE_NAME = 'yht-pwa-shell-v21-ime-final-search';
+const CACHE_NAME = 'yht-pwa-shell-v22-live-search-input';
 const APP_FILES = ['/', '/index.html', '/manifest.json', '/icons/icon-192.png', '/icons/icon-512.png'];
 
 self.addEventListener('install', event => {

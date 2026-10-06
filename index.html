@@ -786,26 +786,10 @@ function monthSelectHtml(key, rowsForCount) {
 
 function setMonth(key, v) { tabState[key].month = v; tabState[key].page=1; selected[key].clear(); renderTab(key); }
 function setFilter(key, v) { tabState[key].filterMode = v; tabState[key].page=1; selected[key].clear(); renderTab(key); }
-const orderSearchTimers = {};
-function startOrderSearch(key,input){
-  input.dataset.composing='true';
-  clearTimeout(orderSearchTimers[key]);
-}
-function queueOrderSearch(key,input){
-  clearTimeout(orderSearchTimers[key]);
-  orderSearchTimers[key]=setTimeout(()=>{
-    if(input.isConnected && input.dataset.composing!=='true') setSearch(key,input.value);
-  },120);
-}
-function handleOrderSearch(key,input,event){
-  if(!input.isConnected || input.dataset.composing==='true' || event.isComposing)return;
-  queueOrderSearch(key,input);
-}
-function finishOrderSearch(key,input){
-  input.dataset.composing='false';
-  queueOrderSearch(key,input);
-}
-function setSearch(key, v) { tabState[key].search = v; tabState[key].page=1; selected[key].clear(); renderTab(key); }
+function startOrderSearch(key,input){}
+function handleOrderSearch(key,input,event){if(input.isConnected)setSearch(key,input.value);}
+function finishOrderSearch(key,input){if(input.isConnected)setSearch(key,input.value);}
+function setSearch(key,v){tabState[key].search=v;tabState[key].page=1;selected[key].clear();renderTab(key,true);}
 function toggleSelect(key, rowIndex) {
   const s = selected[key];
   if (s.has(rowIndex)) s.delete(rowIndex); else s.add(rowIndex);
@@ -900,7 +884,7 @@ function paginateOrders(rows,size,page){
   const start=(current-1)*size;
   return {rows:rows.slice(start,start+size),pages,page:current,start,end:Math.min(rows.length,start+size)};
 }
-function renderTab(key) {
+function renderTab(key, searchOnly = false) {
   const st = tabState[key];
   const container=document.getElementById('tab-'+key);
   const viewKey=JSON.stringify([st.filterMode,st.search,st.month,st.pageSize,st.page]);
@@ -945,7 +929,7 @@ function renderTab(key) {
     <button class="bulk-btn" style="background:#6B5B95" onclick="openAddModal('${key}')">➕ 등록</button>
   ` : "";
 
-  document.getElementById("tab-" + key).innerHTML = `
+  const nextMarkup = `
     <div class="settlement-layout orders-layout"><div class="panel">
       <div class="toolbar">
         <div class="row">
@@ -963,6 +947,18 @@ function renderTab(key) {
 ${!IS_OWNER ? '<div class="lock-note">👀 보기 전용 계정입니다. 등록/수정은 관리자만 가능해요.</div>' : ''}
     </div>${st.filterMode === "unsettled" ? settlementPanelHtml() : ""}</div>
   `;
+  if(searchOnly && container.querySelector('.orders-list')){
+    const next=document.createElement('div');next.innerHTML=nextMarkup;
+    for(const selector of ['.orders-list','.order-pagination','.order-actions']){
+      const current=container.querySelector(selector),replacement=next.querySelector(selector);
+      if(current&&replacement)current.innerHTML=replacement.innerHTML;
+    }
+    const month=container.querySelector('.toolbar select'),nextMonth=next.querySelector('.toolbar select');
+    if(month&&nextMonth)month.innerHTML=nextMonth.innerHTML;
+    container.dataset.orderView=JSON.stringify([st.filterMode,st.search,st.month,st.pageSize,st.page]);
+    return;
+  }
+  container.innerHTML=nextMarkup;
   container.dataset.orderView=JSON.stringify([st.filterMode,st.search,st.month,st.pageSize,st.page]);
   container.querySelectorAll('.orders-mobile details').forEach((d,i)=>d.open=!!openDetails[i]);
   let nextFocus=null;
