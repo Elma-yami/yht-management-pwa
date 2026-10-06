@@ -174,6 +174,41 @@
 .settlement-items{max-height:40vh;overflow:auto}.settlement-item{padding:10px 0;border-bottom:1px solid var(--line);overflow-wrap:anywhere}.settlement-item button{float:right}.settlement-panel button,.cart-add{cursor:pointer;border:1px solid var(--line);border-radius:6px;padding:7px 10px}.settlement-panel button:disabled,.cart-add:disabled{opacity:.5;cursor:default}
 .settlement-panel>.row{margin-top:14px;flex-wrap:wrap}.settlement-error{color:#B3441F}.settlement-report{margin-top:16px;max-height:35vh;overflow:auto;font-size:12px}.settlement-report summary{cursor:pointer;font-weight:700}
 @media(max-width:900px){.settlement-layout{display:block}.settlement-panel{width:100%;position:sticky;bottom:0;top:auto;z-index:5;margin-top:14px;box-shadow:0 -4px 14px #0002}.settlement-items{max-height:22vh}.settlement-report{max-height:20vh}.settlement-panel{padding:12px}.settlement-panel h2{font-size:17px}.settlement-panel p{margin:7px 0}}
+/* Approved order-list table: all desktop columns fit the available width. */
+.orders-layout{display:block}
+.orders-layout>.settlement-panel{width:100%;position:static;margin-top:16px}
+.orders-list{padding:12px;max-height:none;overflow:visible}
+.orders-table{width:100%;table-layout:fixed;border-collapse:collapse;font-size:12px;margin-bottom:18px}
+.orders-table th,.orders-table td{border:1px solid var(--line);padding:10px 4px;vertical-align:middle;overflow-wrap:anywhere}
+.orders-table th{background:var(--steel-soft);color:var(--ink);font-size:11px;font-weight:600;text-align:center}
+.orders-table td{background:var(--panel)}
+.orders-table .order-picked td{background:var(--accent-soft)}
+.orders-table .order-flagged td{background:var(--danger-soft)}
+.orders-table .order-number{text-align:right;font-variant-numeric:tabular-nums}
+.orders-table td:nth-child(2){font-weight:700;letter-spacing:-.4px}
+.orders-table td:nth-child(8){word-break:keep-all}
+.orders-table td:nth-child(1),.orders-table td:nth-child(4),.orders-table td:nth-child(5),.orders-table td:nth-child(6),.orders-table td:nth-child(7),.orders-table td:nth-child(12),.orders-table td:nth-child(13),.orders-table td:nth-child(14){text-align:center}
+.orders-table .badge{display:inline-block;padding:2px 4px;max-width:100%;overflow-wrap:anywhere}
+.order-status-note{font-size:11px;color:var(--sub);margin-top:4px}
+.orders-mobile{display:none}
+.order-actions{width:100%;padding-top:8px;border-top:1px solid var(--line)}
+.order-actions .selection-count{font-size:13px;font-weight:700;color:var(--steel);margin-right:6px}
+.order-actions .bulk-btn{padding:7px 10px}
+.orders-list input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent)}
+@media(min-width:901px) and (max-width:1150px){.sidebar{width:180px;flex-basis:180px}.main-area{padding:18px 12px}.orders-list{padding:8px}.orders-table{font-size:11px}.orders-table th,.orders-table td{padding:9px 3px}}
+@media(max-width:700px){
+ .orders-desktop{display:none}.orders-mobile{display:block;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-bottom:16px}
+ .order-mobile-row{padding:12px;background:var(--panel);border-bottom:1px solid var(--line)}
+ .order-mobile-row:last-child{border-bottom:0}.order-mobile-row.order-picked{background:var(--accent-soft)}
+ .order-mobile-head{display:flex;align-items:center;gap:8px;font-size:12px}.order-mobile-head .badge{margin-left:auto}
+ .order-mobile-row details{margin-left:24px}.order-mobile-row summary{cursor:pointer;min-height:44px;padding:7px 0;display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px;list-style:none}
+ .order-mobile-row summary:after{content:'⌄';color:var(--sub)}.order-mobile-row details[open] summary:after{content:'⌃'}
+ .order-mobile-meta{display:flex;justify-content:space-between;gap:8px;font-size:11px;color:var(--sub)}
+ .order-mobile-row dl{display:grid;grid-template-columns:85px minmax(0,1fr);gap:8px;margin:12px 0 0;padding-top:12px;border-top:1px solid var(--line);font-size:12px}
+ .order-mobile-row dt{color:var(--sub)}.order-mobile-row dd{margin:0;overflow-wrap:anywhere}
+ .order-actions .bulk-btn{min-height:44px}.order-actions .selection-count{width:100%}
+}
+
 </style>
 </head>
 <body>
@@ -737,6 +772,33 @@ function toggleSelect(key, rowIndex) {
   renderTab(key);
 }
 
+function orderCheckbox(key,r){
+ return IS_OWNER ? `<input type="checkbox" aria-label="${esc(r.id)} 선택" ${selected[key].has(r.rowIndex)?'checked':''} onchange="toggleSelect('${key}',${r.rowIndex})">` : '';
+}
+function orderValue(value){return value === '' || value == null ? '—' : esc(value);}
+function orderMoney(value){return value === '' || value == null ? '—' : esc(Number(value).toLocaleString('ko-KR'));}
+function orderStatus(r){
+ return `<span class="badge ${esc(r.status)}">${esc(r.status||'—')}</span><div class="order-status-note">${esc(r.billing||'미정산')}${r.status==='완료'&&r.doneDate?'<br>'+esc(r.doneDate):''}</div>`;
+}
+function orderRowClass(key,r){return selected[key].has(r.rowIndex)?'order-picked':isOverdue(r)?'order-flagged':'';}
+function orderTableHtml(key,rows){
+ const all=rows.length>0&&rows.every(r=>selected[key].has(r.rowIndex));
+ const ids=rows.map(r=>r.rowIndex);
+ const headers=['관리번호','VUD','라인','공정','설비호기','제품S/N','품목','수량','단가','금액','현장담당자','납품예정일','상태'];
+ const widths=[3,10,7,4,5,6,6,22,3.5,6.5,7,6,8,6];
+ return `<div class="orders-desktop"><table class="orders-table" aria-label="수주목록"><colgroup>${widths.map(w=>`<col style="width:${w}%">`).join('')}</colgroup><thead><tr><th>${IS_OWNER?`<input type="checkbox" aria-label="이 월 전체 선택" ${all?'checked':''} onchange="toggleOrderMonth('${key}',[${ids}],this.checked)">`:''}</th>${headers.map(h=>`<th scope="col">${h}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr class="${orderRowClass(key,r)}"><td>${orderCheckbox(key,r)}</td><td>${orderValue(r.id)}</td><td>${orderValue(r.vud)}</td><td>${orderValue(r.line)}</td><td>${orderValue(r.process)}</td><td>${orderValue(r.eqp)}</td><td>${orderValue(r.sn)}</td><td>${orderValue(r.item)}</td><td class="order-number">${orderValue(r.qty)}</td><td class="order-number">${orderMoney(r.price)}</td><td class="order-number">${orderMoney(r.amount)}</td><td>${orderValue(r.owner)}</td><td>${orderValue(r.dueDate)}</td><td>${orderStatus(r)}</td></tr>`).join('')}</tbody></table></div><div class="orders-mobile">${rows.map(r=>`<div class="order-mobile-row ${orderRowClass(key,r)}"><div class="order-mobile-head">${orderCheckbox(key,r)}<b>${orderValue(r.id)}</b><span class="badge ${esc(r.status)}">${orderValue(r.status)}</span></div><details><summary><span>${orderValue(r.item)}</span><b>${orderValue(r.qty)}개</b></summary><div class="order-mobile-meta"><span>${orderValue(r.vud)} · ${orderValue(r.line)} / ${orderValue(r.process)}</span><b>${orderMoney(r.amount)}원</b></div><dl>${[['설비호기',r.eqp],['제품S/N',r.sn],['단가',orderMoney(r.price)],['현장담당자',r.owner],['납품예정일',r.dueDate],['납품완료일',r.doneDate],['수주일',r.orderDate],['정산상태',r.billing],['비고',r.note]].map(([k,v])=>`<dt>${k}</dt><dd>${orderValue(v)}</dd>`).join('')}</dl></details></div>`).join('')}</div>`;
+}
+function toggleOrderMonth(key,ids,checked){
+ if(!IS_OWNER)return;
+ ids.forEach(id=>checked?selected[key].add(id):selected[key].delete(id));renderTab(key);
+}
+function selectedOrder(key){
+ if(!IS_OWNER||selected[key].size!==1)return null;
+ return DATA[key].find(r=>selected[key].has(r.rowIndex))||null;
+}
+function editSelectedOrder(key){const r=selectedOrder(key);if(r)openEditModal(key,r.rowIndex);}
+function partialSelectedOrder(key){const r=selectedOrder(key);if(r&&r.status!=='완료'&&Number(r.qty)>1)doPartial(key,r.rowIndex,Number(r.qty));}
+
 function cardHtml(key, r) {
   const flagged = isOverdue(r), pending = isPending(r);
   const cls = flagged ? "flagged" : pending ? "pending" : "";
@@ -791,14 +853,19 @@ function renderTab(key) {
   const groups = {};
   filtered.forEach(r => { const k = monthKeyOf(r); (groups[k] = groups[k]||[]).push(r); });
   const keys = Object.keys(groups).sort().reverse();
-  const body = keys.map(k => `<div class="month-header">${monthLabel(k)} (${groups[k].length}건)</div>` + groups[k].map(r=>cardHtml(key,r)).join("")).join("");
+  const body = keys.map(k => `<div class="month-header">${monthLabel(k)} (${groups[k].length}건)</div>` + orderTableHtml(key,groups[k])).join("");
 
   const filters = [["all","전체"],["inprogress","진행중만"],["done","납품완료만"],["unsettled","미정산만"],["settled","정산완료만"]];
   const filterHtml = filters.map(([id,label]) => `<button class="filter-btn ${st.filterMode===id?'active':''}" onclick="setFilter('${key}','${id}')">${label}</button>`).join("");
   const selCount = selected[key].size;
   const canComplete = st.filterMode !== "done" && selCount > 0 && [...selected[key]].every(id => DATA[key].some(r => r.rowIndex === id && r.status !== "완료"));
   const doneSelected = selCount > 0 && [...selected[key]].every(id => DATA[key].some(r => r.rowIndex === id && r.status === "완료"));
+  const singleOrder = selectedOrder(key);
+  const canPartial = singleOrder && singleOrder.status !== "완료" && Number(singleOrder.qty)>1;
   const ownerButtons = IS_OWNER ? `
+    <span class="selection-count" role="status">선택 ${selCount}건</span>
+    <button class="bulk-btn" style="background:var(--steel)" ${singleOrder?"":"disabled"} onclick="editSelectedOrder('${key}')">수정</button>
+    <button class="bulk-btn" style="background:var(--steel)" ${canPartial?"":"disabled"} onclick="partialSelectedOrder('${key}')">부분납품</button>
     <button class="bulk-btn" style="background:var(--steel)" ${doneSelected?"":"disabled"} onclick="doSelectedStatement('${key}')">📄 선택 ${selCount}건 거래명세서 쓰기</button>
     <button class="bulk-btn" ${canComplete?"":"disabled"} onclick="doBulkComplete('${key}')">✅ 선택 ${selCount}건 납품처리</button>
     <button class="bulk-btn" style="background:#8A8A8A" ${selCount===0?"disabled":""} onclick="doUndoComplete('${key}')">↩️ 선택 ${selCount}건 납품취소</button>
@@ -809,7 +876,7 @@ function renderTab(key) {
   ` : "";
 
   document.getElementById("tab-" + key).innerHTML = `
-    <div class="settlement-layout"><div class="panel">
+    <div class="settlement-layout orders-layout"><div class="panel">
       <div class="toolbar">
         <div class="row">
           <input type="text" placeholder="🔍 관리번호 / 품목 / 담당자 검색" value="${esc(st.search)}" oninput="setSearch('${key}', this.value)" style="flex:1;min-width:150px">
@@ -817,10 +884,10 @@ function renderTab(key) {
         </div>
         <div class="row" style="justify-content:space-between">
           <div class="filters">${filterHtml}</div>
-          <div class="row">${ownerButtons}</div>
+          <div class="row order-actions">${ownerButtons}</div>
         </div>
       </div>
-      <div class="card-list">${body || '<div class="empty">해당하는 건이 없습니다</div>'}</div>
+      <div class="orders-list">${body || '<div class="empty">해당하는 건이 없습니다</div>'}</div>
       ${!IS_OWNER ? '<div class="lock-note">👀 보기 전용 계정입니다. 등록/수정은 관리자만 가능해요.</div>' : ''}
     </div>${settlementPanelHtml()}</div>
   `;
@@ -904,7 +971,7 @@ function doPartial(key, rowIndex, totalQty) {
   const n = Number(input);
   if (!n || n < 1 || n >= totalQty) { showToast(`1개 이상, ${totalQty}개 미만으로 입력해주세요`); return; }
   google.script.run.withSuccessHandler((res) => {
-    DATA[key] = res.rows;
+    DATA[key] = res.rows; selected[key].clear();
     renderStats(); renderTab(key); renderMonthly();
     showToast(`${n}개 부분 납품처리했습니다 (나머지 ${totalQty-n}개는 그대로 남아있어요)`);
   }).withFailureHandler((e) => showToast("오류: " + e.message)).partialComplete(key, rowIndex, n, ADMIN_PW);
