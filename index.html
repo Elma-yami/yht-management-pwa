@@ -891,10 +891,10 @@ function renderTab(key) {
     <button class="bulk-btn" style="background:var(--steel)" ${singleOrder?"":"disabled"} onclick="editSelectedOrder('${key}')">수정</button>
     <button class="bulk-btn" style="background:var(--steel)" ${canPartial?"":"disabled"} onclick="partialSelectedOrder('${key}')">부분납품</button>
     <button class="bulk-btn" style="background:var(--steel)" ${doneSelected?"":"disabled"} onclick="doSelectedStatement('${key}')">📄 선택 ${selCount}건 거래명세서 쓰기</button>
-    <button class="bulk-btn" ${canComplete?"":"disabled"} onclick="doBulkComplete('${key}')">✅ 선택 ${selCount}건 납품처리</button>
-    <button class="bulk-btn" style="background:#8A8A8A" ${selCount===0?"disabled":""} onclick="doUndoComplete('${key}')">↩️ 선택 ${selCount}건 납품취소</button>
-    <button class="bulk-btn" style="background:var(--wait)" ${selCount===0||settlementBusy?"disabled":""} onclick="doBulkSettle('${key}')">→ 선택 ${selCount}건 정산함</button>
-    <button class="bulk-btn" ${settlementBusy||!selCount||![...selected[key]].every(id=>DATA[key].some(r=>r.rowIndex===id&&r.billing==="완료"))?"disabled":""} onclick="cancelSettlement('${key}')">↩ 정산 취소</button>
+    ${st.filterMode !== "settled" ? `<button class="bulk-btn" ${canComplete?"":"disabled"} onclick="doBulkComplete('${key}')">✅ 선택 ${selCount}건 납품처리</button>` : ""}
+    ${!["inprogress","settled"].includes(st.filterMode) ? `<button class="bulk-btn" style="background:#8A8A8A" ${selCount===0?"disabled":""} onclick="doUndoComplete('${key}')">↩️ 선택 ${selCount}건 납품취소</button>` : ""}
+    ${st.filterMode !== "inprogress" ? `<button class="bulk-btn" style="background:var(--wait)" ${selCount===0||settlementBusy?"disabled":""} onclick="doBulkSettle('${key}')">→ 선택 ${selCount}건 정산함</button>` : ""}
+    ${!["inprogress","done"].includes(st.filterMode) ? `<button class="bulk-btn" ${settlementBusy||!selCount||![...selected[key]].every(id=>DATA[key].some(r=>r.rowIndex===id&&r.billing==="완료"))?"disabled":""} onclick="cancelSettlement('${key}')">↩ 정산 취소</button>` : ""}
     <button class="bulk-btn" style="background:var(--danger)" ${selCount===0?"disabled":""} onclick="doDelete('${key}')">🗑️ 선택 ${selCount}건 삭제</button>
     <button class="bulk-btn" style="background:#6B5B95" onclick="openAddModal('${key}')">➕ 등록</button>
   ` : "";
