@@ -786,6 +786,14 @@ function monthSelectHtml(key, rowsForCount) {
 
 function setMonth(key, v) { tabState[key].month = v; tabState[key].page=1; selected[key].clear(); renderTab(key); }
 function setFilter(key, v) { tabState[key].filterMode = v; tabState[key].page=1; selected[key].clear(); renderTab(key); }
+function handleOrderSearch(key, input, event) {
+  if (!input.isConnected || input.dataset.composing === 'true' || event.isComposing) return;
+  setSearch(key, input.value);
+}
+function finishOrderSearch(key, input) {
+  input.dataset.composing = 'false';
+  if (input.isConnected) setSearch(key, input.value);
+}
 function setSearch(key, v) { tabState[key].search = v; tabState[key].page=1; selected[key].clear(); renderTab(key); }
 function toggleSelect(key, rowIndex) {
   const s = selected[key];
@@ -930,7 +938,7 @@ function renderTab(key) {
     <div class="settlement-layout orders-layout"><div class="panel">
       <div class="toolbar">
         <div class="row">
-          <input type="text" placeholder="🔍 관리번호 / 품목 / 담당자 검색" value="${esc(st.search)}" oninput="setSearch('${key}', this.value)" style="flex:1;min-width:150px">
+          <input type="text" placeholder="🔍 관리번호 / 품목 / 담당자 검색" value="${esc(st.search)}" oncompositionstart="this.dataset.composing='true'" oncompositionend="finishOrderSearch('${key}', this)" oninput="handleOrderSearch('${key}', this, event)" style="flex:1;min-width:150px">
           ${monthSelectHtml(key, allVisible)}
           <div class="order-page-controls" aria-label="수주목록 표시 건수">${[10,30,50,100].map(size=>`<button class="filter-btn" aria-pressed="${st.pageSize===size}" onclick="setOrderPageSize('${key}',${size})">${size}건 보기</button>`).join('')}</div>
         </div>
