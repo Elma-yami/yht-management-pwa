@@ -1082,7 +1082,7 @@ function parsePasteText(text) {
       (line.trim().startsWith("|") && line.trim().endsWith("|") ? line.trim().slice(1, -1).split("|") : [line]);
     return cells.map(s => s.replace(/&nbsp;|\u00a0/g, " ").replace(/\\_/g, "_").trim());
   };
-  const normalizeHeader = (s) => s.replace(/\s|\(|\)|\[|\]|\//g, "").toLowerCase();
+  const normalizeHeader = (s) => s.replace(/\*|\s|\(|\)|\[|\]|\//g, "").toLowerCase();
   const firstCells = splitCells(lines[0]);
 
   let fieldNames, dataLines;
@@ -1095,7 +1095,7 @@ function parsePasteText(text) {
       "제품S/N":"sn","제품 S/N":"sn","S/N":"sn",
       "품목":"item","조치내용":"item","조치 내용":"item",
       "수량":"qty",
-      "담당자":"owner","현장담당자":"owner",
+      "담당자":"owner","현장담당자":"owner","의뢰 담당자":"owner","의뢰담당자":"owner",
       "단가":"price",
       "수주일":"orderDate","자재발주":"orderDate","자재발주일":"orderDate",
       "납품예정일":"dueDate","납품예정":"dueDate",
