@@ -1,4 +1,4 @@
-const CACHE_NAME = 'yht-pwa-shell-v16-settlement-panel';
+const CACHE_NAME = 'yht-pwa-shell-v17-compact-settlement';
 const APP_FILES = ['/', '/index.html', '/manifest.json', '/icons/icon-192.png', '/icons/icon-512.png'];
 
 self.addEventListener('install', event => {
