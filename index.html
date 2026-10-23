@@ -554,6 +554,28 @@ function ensureXlsx() {
   return xlsxLoadPromise;
 }
 
+const SELECTED_EXCEL_HEADERS = ["관리번호","VUD","라인","공정","설비호기","제품 S/N","품목","수량","단가","금액","수주일","납품예정일","납품완료일","상태","현장담당자","청구여부","비고"];
+function selectedExcelRows(key) {
+  return DATA[key].filter(r => selected[key].has(r.rowIndex)).map(r => [
+    r.id, r.vud, r.line, r.process, r.eqp, r.sn, r.item, r.qty, r.price, r.amount,
+    r.orderDate, r.dueDate, r.doneDate, r.status, r.owner, r.billing, r.note,
+  ]);
+}
+async function exportSelectedExcel(key) {
+  // Snapshot only the checked item rows; exporting never calls the Sheets API.
+  const rows = selectedExcelRows(key);
+  if (!rows.length) { showToast("선택한 항목이 없어요"); return; }
+  try {
+    await ensureXlsx();
+    const ws = XLSX.utils.aoa_to_sheet([SELECTED_EXCEL_HEADERS, ...rows]);
+    ws["!cols"] = SELECTED_EXCEL_HEADERS.map(() => ({wch:14}));
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "선택수주");
+    XLSX.writeFile(wb, `YHT_${key === "mt" ? "유지보수" : "국소배기"}_선택${rows.length}건_${TODAY || ""}.xlsx`);
+    showToast(`선택 ${rows.length}건을 엑셀로 내보냈습니다`);
+  } catch (e) { showToast(e.message || "엑셀 다운로드에 실패했습니다"); }
+}
+
 async function exportExcel(mode) {
   const category = document.getElementById("exportCategorySelect").value; // "all" | "mt" | "gas"
   const showGubunCol = category === "all";
@@ -919,6 +941,7 @@ function renderTab(key, searchOnly = false) {
   const canPartial = singleOrder && singleOrder.status !== "완료" && Number(singleOrder.qty)>1;
   const ownerButtons = IS_OWNER ? `
     <span class="selection-count" role="status">선택 ${selCount}건</span>
+    <button class="bulk-btn" style="background:var(--steel);min-height:44px" ${selCount===0?"disabled":""} onclick="exportSelectedExcel('${key}')">⬇ 선택 ${selCount}건 엑셀 다운로드</button>
     <button class="bulk-btn" style="background:var(--steel)" ${singleOrder?"":"disabled"} onclick="editSelectedOrder('${key}')">수정</button>
     <button class="bulk-btn" style="background:var(--steel)" ${canPartial?"":"disabled"} onclick="partialSelectedOrder('${key}')">부분납품</button>
     <button class="bulk-btn" style="background:var(--steel)" ${doneSelected?"":"disabled"} onclick="doSelectedStatement('${key}')">📄 선택 ${selCount}건 거래명세서 쓰기</button>
