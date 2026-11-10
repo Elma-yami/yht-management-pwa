@@ -183,11 +183,10 @@
 @media(max-width:900px){.orders-layout{display:block;padding-bottom:0}.orders-layout:has(>.settlement-panel){padding-bottom:76px}.orders-layout>.settlement-panel{position:fixed;bottom:0;left:0;right:0;top:auto;width:auto;z-index:30;margin:0;border-radius:14px 14px 0 0;max-height:75vh;padding:12px 16px;padding-bottom:calc(12px + env(safe-area-inset-bottom));box-shadow:0 -4px 18px #0002}.settlement-toggle{display:flex;justify-content:space-between;align-items:center;width:100%;background:var(--panel);color:var(--ink);font-weight:700}.settlement-content{display:none}.settlement-panel.is-open .settlement-content{display:block}.settlement-content h2{display:none}.settlement-items{max-height:30vh}}
 
 .orders-list{padding:12px;max-height:68vh;overflow-y:auto;overflow-x:hidden}
-.order-page-controls{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:12px}
+.order-page-size{min-width:106px;min-height:36px;background:var(--panel);color:var(--ink);cursor:pointer}
 .order-pagination{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:12px;border-top:1px solid var(--line);font-size:12px;color:var(--sub)}
 .order-pagination button:disabled{opacity:.4;cursor:default}
-.order-page-controls button[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
-@media(max-width:700px){.order-page-controls button,.order-pagination button{min-height:44px}}
+@media(max-width:700px){.order-page-size,.order-pagination button{min-height:44px}}
 .orders-table{width:100%;table-layout:fixed;border-collapse:collapse;font-size:12px;margin-bottom:18px}
 .orders-table th,.orders-table td{border:1px solid var(--line);padding:10px 4px;vertical-align:middle;overflow-wrap:anywhere}
 .orders-table th{background:var(--steel-soft);color:var(--ink);font-size:11px;font-weight:600;text-align:center}
@@ -895,13 +894,14 @@ function cardHtml(key, r) {
 }
 
 function setOrderPageSize(key,size){
-  if(![10,30,50,100].includes(size))return;
+  if(![10,30,50,100,"all"].includes(size))return;
   tabState[key].pageSize=size;tabState[key].page=1;selected[key].clear();renderTab(key);
 }
 function setOrderPage(key,page){
   tabState[key].page=Math.max(1,page);selected[key].clear();renderTab(key);
 }
 function paginateOrders(rows,size,page){
+  if(size==="all")return {rows,pages:1,page:1,start:0,end:rows.length};
   const pages=Math.max(1,Math.ceil(rows.length/size));
   const current=Math.min(pages,Math.max(1,page||1));
   const start=(current-1)*size;
@@ -918,6 +918,7 @@ function renderTab(key, searchOnly = false) {
   const openDetails=sameView?[...container.querySelectorAll('.orders-mobile details')].map(d=>d.open):[];
   const active=document.activeElement;
   const restoreSearch=container.contains(active)&&active.matches('input[type="text"]');
+  const restorePageSize=container.contains(active)&&active.matches(".order-page-size");
   const restoreCheckbox=container.contains(active)&&active.matches('input[type="checkbox"]')?active.getAttribute('aria-label'):null;
   const caret=restoreSearch?{start:active.selectionStart,end:active.selectionEnd}:null;
   const allVisible = visibleRows(key);
@@ -959,7 +960,7 @@ function renderTab(key, searchOnly = false) {
         <div class="row">
           <input type="text" placeholder="🔍 관리번호 / 품목 / 담당자 검색" value="${esc(st.search)}" oncompositionstart="startOrderSearch('${key}',this)" oncompositionend="finishOrderSearch('${key}', this)" oninput="handleOrderSearch('${key}', this, event)" style="flex:1;min-width:150px">
           ${monthSelectHtml(key, allVisible)}
-          <div class="order-page-controls" aria-label="수주목록 표시 건수">${[10,30,50,100].map(size=>`<button class="filter-btn" aria-pressed="${st.pageSize===size}" onclick="setOrderPageSize('${key}',${size})">${size}건 보기</button>`).join('')}</div>
+          <select class="order-page-size" aria-label="수주목록 표시 건수" onchange="setOrderPageSize('${key}',this.value==='all'?'all':Number(this.value))">${[10,30,50,100,"all"].map(size=>`<option value="${size}" ${st.pageSize===size?'selected':''}>${size==="all"?"전체 보기":size+"건 보기"}</option>`).join('')}</select>
         </div>
         <div class="row" style="justify-content:space-between">
           <div class="filters">${filterHtml}</div>
@@ -967,7 +968,7 @@ function renderTab(key, searchOnly = false) {
         </div>
       </div>
       <div class="orders-list">${body || '<div class="empty">해당하는 건이 없습니다</div>'}</div>
-      <div class="order-pagination"><span>전체 ${filtered.length}건 · ${filtered.length?pagination.start+1:0}–${pagination.end}건 표시</span><div class="row"><button class="filter-btn" ${st.page===1?'disabled':''} onclick="setOrderPage('${key}',${st.page-1})">이전</button><span>${st.page} / ${pagination.pages} 페이지</span><button class="filter-btn" ${st.page===pagination.pages?'disabled':''} onclick="setOrderPage('${key}',${st.page+1})">다음</button></div></div>
+      <div class="order-pagination"><span>전체 ${filtered.length}건 · ${filtered.length?pagination.start+1:0}–${pagination.end}건 표시</span><div class="row" ${st.pageSize==="all"?'hidden style="display:none"':""}><button class="filter-btn" ${st.page===1?'disabled':''} onclick="setOrderPage('${key}',${st.page-1})">이전</button><span>${st.page} / ${pagination.pages} 페이지</span><button class="filter-btn" ${st.page===pagination.pages?'disabled':''} onclick="setOrderPage('${key}',${st.page+1})">다음</button></div></div>
 ${!IS_OWNER ? '<div class="lock-note">👀 보기 전용 계정입니다. 등록/수정은 관리자만 가능해요.</div>' : ''}
     </div>${st.filterMode === "unsettled" ? settlementPanelHtml() : ""}</div>
   `;
@@ -987,6 +988,7 @@ ${!IS_OWNER ? '<div class="lock-note">👀 보기 전용 계정입니다. 등록
   container.querySelectorAll('.orders-mobile details').forEach((d,i)=>d.open=!!openDetails[i]);
   let nextFocus=null;
   if(restoreSearch)nextFocus=container.querySelector('input[type="text"]');
+  else if(restorePageSize)nextFocus=container.querySelector('.order-page-size');
   else if(restoreCheckbox)nextFocus=[...container.querySelectorAll('input[type="checkbox"]')].find(input=>input.getAttribute('aria-label')===restoreCheckbox&&input.getClientRects().length);
   if(nextFocus){nextFocus.focus({preventScroll:true});if(caret)nextFocus.setSelectionRange(caret.start,caret.end);}
   const newList=container.querySelector('.orders-list');
