@@ -1,4 +1,4 @@
-const CACHE_NAME = 'yht-pwa-shell-v25-order-count-dropdown';
+const CACHE_NAME = 'yht-pwa-shell-v26-sticky-selection';
 const APP_FILES = ['/', '/index.html', '/manifest.json', '/icons/icon-192.png', '/icons/icon-512.png'];
 
 self.addEventListener('install', event => {
