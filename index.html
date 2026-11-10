@@ -268,11 +268,22 @@
 .layout-detail-grid dt{font-size:11px;color:var(--sub)}.layout-detail-grid dd{margin:2px 0 0;white-space:pre-wrap;overflow-wrap:anywhere}
 #orderDetailDialog{width:min(520px,calc(100% - 28px));max-height:calc(100% - 28px);border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--ink);padding:18px}
 @media(max-width:700px){.layout-controls .layout-filter-row{grid-template-columns:repeat(3,minmax(0,1fr))}.layout-filter-row .layout-search{grid-column:1/-1}.layout-filter-row select{padding-inline:5px}.layout-id{min-height:38px}}
+#yht-guide-dialog{width:min(570px,calc(100% - 24px));max-height:calc(100% - 24px);box-sizing:border-box;padding:16px;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--ink);font:inherit}
+#yht-guide-dialog::backdrop{background:#10182866}
+#yht-guide-dialog .guide-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;border-bottom:1px solid var(--line);padding-bottom:10px}
+#yht-guide-dialog .guide-top h2{margin:2px 0 4px;font-size:20px}
+#yht-guide-dialog .guide-top button{flex:none}
+#yht-guide-dialog .small{color:var(--sub);font-size:12px}
+#yht-guide-dialog details{border-bottom:1px solid var(--line);padding:0 4px}
+#yht-guide-dialog summary{padding:10px 3px;font-weight:700;cursor:pointer}
+#yht-guide-dialog details[open] summary{color:var(--steel)}
+#yht-guide-dialog ol{margin:0 0 10px;padding-left:24px}
+#yht-guide-dialog li+li{margin-top:3px}
 </style>
 </head>
 <body>
 <main class="main-area layout-main"><div class="main-inner">
-<header class="layout-header"><div><div class="eyebrow">YHT · 수주 / 납품 / 정산 통합관리</div><h1>예스히팅테크닉스 관리장부</h1></div><div class="top-actions"><span id="roleBadge" class="badge-role badge-viewer">불러오는 중...</span><button class="filter-btn" id="importSettlementBtn" style="display:none">정산리스트 대조</button><button class="filter-btn" onclick="openSettings()">⚙ 설정</button></div></header>
+<header class="layout-header"><div><div class="eyebrow">YHT · 수주 / 납품 / 정산 통합관리</div><h1>예스히팅테크닉스 관리장부</h1></div><div class="top-actions"><span id="roleBadge" class="badge-role badge-viewer">불러오는 중...</span><button class="filter-btn" id="importSettlementBtn" style="display:none">정산리스트 대조</button><button type="button" class="filter-btn" id="openYhtGuide" aria-haspopup="dialog">ⓘ 사용방법</button><button class="filter-btn" onclick="openSettings()">⚙ 설정</button></div></header>
 <nav class="layout-tabs" aria-label="장부 메뉴"><button class="nav-btn" data-tab="dashboard">대시보드</button><button class="nav-btn active" data-tab="mt">유지보수</button><button class="nav-btn" data-tab="gas">국소배기</button><button class="nav-btn" data-tab="monthly">월별집계</button><button class="nav-btn" data-tab="prices">단가리스트</button></nav>
 <div id="tab-dashboard" class="tabcontent" style="display:none"></div>
 <div id="tab-mt" class="tabcontent"></div>
@@ -280,6 +291,16 @@
 <div id="tab-monthly" class="tabcontent" style="display:none"></div>
 <div id="tab-prices" class="tabcontent" style="display:none"></div>
 </div></main>
+<dialog id="yht-guide-dialog" class="guide-dialog" aria-labelledby="yht-guide-title">
+ <div class="guide-top"><div><div class="eyebrow">YHT 사용 안내</div><h2 id="yht-guide-title">장부 사용방법</h2><div class="small">등록·수정·납품·정산은 관리자 모드에서 할 수 있어요.</div></div><button type="button" id="closeYhtGuide" class="filter-btn" autofocus>닫기</button></div>
+ <details open><summary>신규 수주 여러 건 등록</summary><ol><li>유지보수 또는 국소배기에서 <strong>＋ 신규 등록</strong>을 눌러요.</li><li>엑셀에서 여러 줄을 복사해 붙여넣고 <strong>여러 건 바로 등록</strong>을 눌러요.</li></ol></details>
+ <details><summary>상세 보기와 수정</summary><ol><li>목록의 <strong>관리번호</strong>를 눌러 해당 품목의 상세를 열어요.</li><li><strong>수정</strong>에서 필요한 값을 바꾸고 저장해요.</li></ol></details>
+ <details><summary>엑셀 저장</summary><ol><li>원하는 행을 체크해요. 품목을 다시 검색해도 체크는 남아 있어요.</li><li><strong>엑셀 저장</strong>을 누르면 선택한 행만 저장돼요. 체크가 없으면 현재 검색·필터 결과를 저장해요.</li></ol></details>
+ <details><summary>납품완료 처리와 부분납품</summary><ol><li>전량 납품했으면 해당 행을 체크하고 <strong>납품완료 처리</strong>를 눌러요.</li><li>일부만 납품했으면 한 행을 체크하고 <strong>부분납품</strong>을 눌러요. 이번 수량과 남은 수량을 확인한 뒤 저장해요.</li></ol></details>
+ <details><summary>거래명세서 작성</summary><ol><li>납품이 끝난 품목을 체크해요.</li><li><strong>거래명세서 작성</strong>을 누르고 대상 건수를 확인해요.</li></ol></details>
+ <details><summary>미정산 확인과 정산 확정</summary><ol><li><strong>미정산만</strong>에서 정산할 품목을 체크해 <strong>정산함에 담기</strong>를 눌러요.</li><li>이번 정산의 품목·수량·합계를 확인하고 <strong>정산 확정하기</strong>를 눌러요.</li></ol></details>
+ <details><summary>월별집계와 단가리스트</summary><ol><li><strong>월별집계</strong>에서 연도를 골라 수주·납품·정산 금액을 확인해요.</li><li><strong>단가리스트</strong>에서 원본 Google Sheets 단가표를 열어 단가를 관리해요.</li></ol></details>
+</dialog>
 <div class="toast" id="toast"></div>
 
 <dialog id="orderDetailDialog" aria-labelledby="orderDetailTitle">
@@ -1503,6 +1524,9 @@ settlementFileInput.onchange = (e) => {
 
 document.querySelectorAll(".nav-btn[data-tab]").forEach(b => { b.onclick = () => switchTab(b.dataset.tab); });
 document.getElementById("roleBadge").onclick = toggleAdminMode;
+const yhtGuide=document.getElementById("yht-guide-dialog");
+document.getElementById("openYhtGuide").onclick=()=>{if(!yhtGuide.open)yhtGuide.showModal();};
+document.getElementById("closeYhtGuide").onclick=()=>yhtGuide.close();
 document.addEventListener("click",event=>{
   document.querySelectorAll(".layout-more[open]").forEach(menu=>{
     if(!menu.contains(event.target)||event.target.closest(".layout-more button"))menu.open=false;

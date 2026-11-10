@@ -1,4 +1,4 @@
-const CACHE_NAME = 'yht-pwa-shell-v30-compact-order-layout';
+const CACHE_NAME = 'yht-pwa-shell-v31-user-guide';
 const APP_FILES = ['/', '/index.html', '/manifest.json', '/icons/icon-192.png', '/icons/icon-512.png'];
 
 self.addEventListener('install', event => {
