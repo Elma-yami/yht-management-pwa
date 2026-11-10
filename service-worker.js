@@ -1,4 +1,4 @@
-const CACHE_NAME = 'yht-pwa-shell-v27-partial-delivery-dialog';
+const CACHE_NAME = 'yht-pwa-shell-v28-ledger-layout';
 const APP_FILES = ['/', '/index.html', '/manifest.json', '/icons/icon-192.png', '/icons/icon-512.png'];
 
 self.addEventListener('install', event => {

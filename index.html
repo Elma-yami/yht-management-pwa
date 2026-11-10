@@ -228,51 +228,33 @@
 .settle-actions{display:flex;flex-direction:column;gap:8px}.settlement-panel .settle-confirm{display:flex;width:100%;justify-content:space-between;align-items:center;padding:13px 14px;border:0;border-radius:10px;background:var(--steel);color:#fff;font-size:14px;font-weight:600}.settlement-panel .settle-confirm:disabled{background:var(--line);color:var(--sub);opacity:1}.settlement-panel .settle-clear{align-self:center;background:transparent;border:0;color:var(--sub);font-size:12px;padding:6px 10px}.settle-empty{padding:26px 0;text-align:center;font-size:13px;color:var(--sub);line-height:1.8}.settle-empty small{display:block;font-size:11px}
 @media(max-width:900px){.orders-layout>.settlement-panel{border-radius:16px 16px 0 0;padding:12px 16px;padding-bottom:calc(12px + env(safe-area-inset-bottom))}.settle-heading{display:none}.settle-total{padding:16px 0}.settlement-panel .settle-remove{min-width:44px;min-height:44px}}
 
+.layout-header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;border-bottom:2px solid var(--steel);padding:4px 0 18px}
+.layout-header h1{font-size:clamp(23px,4vw,34px);letter-spacing:-.05em;margin:4px 0 0}.layout-header .eyebrow{color:var(--steel);font-weight:700}
+.layout-tabs{display:flex;flex-wrap:wrap;border-bottom:1px solid var(--line);margin-bottom:16px}
+.layout-tabs .nav-btn{width:auto;min-height:44px;margin:0;padding:10px 14px;border:0;border-bottom:3px solid transparent;border-radius:0;background:transparent;color:var(--sub);font-weight:700}
+.layout-tabs .nav-btn.active{color:var(--steel);background:transparent;border-color:var(--steel)}.layout-tabs .nav-btn:hover{color:var(--steel);background:var(--steel-soft)}
+.layout-registration,.layout-tools{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:14px}
+.layout-registration{margin-bottom:13px}.layout-registration strong,.layout-tools strong{font-size:16px}
+.layout-controls{display:grid;gap:9px;margin-bottom:12px}.layout-controls .row{flex-wrap:wrap}.layout-controls label{display:grid;gap:3px;color:var(--sub);font-size:12px}
+.layout-tools .order-actions{width:auto;border:0;padding:0;gap:6px;flex-wrap:wrap}
+.layout-more{font-size:12px}.layout-more summary{cursor:pointer;padding:7px 10px;border:1px solid var(--line);border-radius:7px}.layout-more .row{flex-wrap:wrap;padding-top:8px}
+.layout-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));background:var(--steel-soft);border-block:1px solid var(--line);margin-bottom:4px}
+.layout-metrics>div{padding:10px 13px;min-width:0}.layout-metrics>div+div{border-left:1px solid var(--line)}.layout-metrics span{display:block;font-size:11px;color:var(--sub)}.layout-metrics b{font-size:clamp(12px,2vw,16px);font-variant-numeric:tabular-nums}
+.orders-table .layout-item details{margin-top:3px}.orders-table .layout-item summary{color:var(--steel);cursor:pointer;font-size:11px}.orders-table .layout-item dl{display:grid;grid-template-columns:auto 1fr;gap:2px 8px;margin:4px 0 0}.orders-table .layout-item dd{margin:0;overflow-wrap:anywhere}
+.layout-main{width:100%;min-width:0}.layout-main .orders-layout{margin-top:0}
+@media(max-width:700px){.layout-tabs .nav-btn{padding-inline:8px;font-size:12px}.layout-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.layout-metrics>div:nth-child(3){border-left:0}.layout-metrics>div:nth-child(n+3){border-top:1px solid var(--line)}.layout-tools .order-actions .selection-count{width:auto}.layout-header .top-actions{gap:6px}.layout-tools button,.layout-registration button{min-height:44px}}
 </style>
 </head>
 <body>
-<div class="app-shell">
-  <aside class="sidebar">
-    <div class="side-brand"><div class="small">예스히팅테크닉스</div><div class="title">YHT 관리 장부</div></div>
-    <button class="nav-btn active" data-tab="dashboard">▦ 대시보드</button>
-    <button class="nav-btn" data-tab="mt">🔧 유지보수 수주관리</button>
-    <button class="nav-btn" data-tab="gas">🌬️ 국소배기 수주관리</button>
-    <button class="nav-btn" data-tab="monthly">📊 월별 집계</button>
-    <div class="side-bottom"><button class="settings-trigger" onclick="openSettings()">⚙ 설정</button></div>
-  </aside>
-  <div class="main-area">
-    <div class="mobile-nav">
-      <button class="nav-btn active" data-tab="dashboard">▦ 대시보드</button>
-      <button class="nav-btn" data-tab="mt">유지보수</button>
-      <button class="nav-btn" data-tab="gas">국소배기</button>
-      <button class="nav-btn" data-tab="monthly">월별</button>
-    </div>
-    <div class="main-inner">
-      <div class="topbar">
-        <div class="top-title">
-          <div class="eyebrow">YHT · 수주 / 납품 / 정산 통합관리</div>
-          <h1 id="pageTitle">대시보드</h1>
-        </div>
-        <div class="top-actions">
-          <button class="filter-btn settings-mobile" onclick="openSettings()">⚙ 설정</button>
-          <span id="roleBadge" class="badge-role badge-viewer">불러오는 중...</span>
-          <button class="filter-btn" id="importSettlementBtn" style="background:#6B5B95;color:#fff;border-color:#6B5B95;display:none">📥 정산리스트</button>
-          <select id="exportCategorySelect" style="font-size:12px;padding:6px 7px">
-            <option value="all">전체</option><option value="mt">유지보수만</option><option value="gas">국소배기만</option>
-          </select>
-          <button class="filter-btn" onclick="exportExcel('all')">⬇ 수주목록</button>
-          <button class="filter-btn" onclick="exportExcel('done')">⬇ 납품완료</button>
-          <button class="filter-btn" onclick="exportExcel('unsettled')">⬇ 미정산</button>
-        </div>
-      </div>
-      <div id="tab-dashboard" class="tabcontent"></div>
-      <div id="tab-mt" class="tabcontent" style="display:none"></div>
-      <div id="tab-gas" class="tabcontent" style="display:none"></div>
-      <div id="tab-monthly" class="tabcontent" style="display:none"></div>
-    </div>
-  </div>
-</div>
-
+<main class="main-area layout-main"><div class="main-inner">
+<header class="layout-header"><div><div class="eyebrow">YHT · 수주 / 납품 / 정산 통합관리</div><h1>예스히팅테크닉스 관리장부</h1></div><div class="top-actions"><span id="roleBadge" class="badge-role badge-viewer">불러오는 중...</span><button class="filter-btn" id="importSettlementBtn" style="display:none">정산리스트 대조</button><button class="filter-btn" onclick="openSettings()">⚙ 설정</button></div></header>
+<nav class="layout-tabs" aria-label="장부 메뉴"><button class="nav-btn" data-tab="dashboard">대시보드</button><button class="nav-btn active" data-tab="mt">유지보수</button><button class="nav-btn" data-tab="gas">국소배기</button><button class="nav-btn" data-tab="monthly">월별집계</button><button class="nav-btn" data-tab="prices">단가리스트</button></nav>
+<div id="tab-dashboard" class="tabcontent" style="display:none"></div>
+<div id="tab-mt" class="tabcontent"></div>
+<div id="tab-gas" class="tabcontent" style="display:none"></div>
+<div id="tab-monthly" class="tabcontent" style="display:none"></div>
+<div id="tab-prices" class="tabcontent" style="display:none"></div>
+</div></main>
 <div class="toast" id="toast"></div>
 
 <div class="modal-overlay" id="settingsModal" role="dialog" aria-modal="true" aria-label="설정">
@@ -406,11 +388,11 @@ let TODAY = "";
 const ADMIN_PW_KEY = "yht_admin_pw"; // 브라우저에 저장해두는 키 (구글 로그인과 무관)
 let ADMIN_PW = localStorage.getItem(ADMIN_PW_KEY) || "";
 const tabState = {
-  mt: { filterMode: "all", search: "", month: "전체", pageSize:30, page:1 },
-  gas: { filterMode: "all", search: "", month: "전체", pageSize:30, page:1 },
+  mt: { filterMode: "all", search: "", month: "전체", year: "전체", pageSize:30, page:1 },
+  gas: { filterMode: "all", search: "", month: "전체", year: "전체", pageSize:30, page:1 },
 };
 let selected = { mt: new Set(), gas: new Set() };
-let currentTab = "dashboard";
+let currentTab = "mt";
 const settlementCart = new Map();
 let settlementReport = [], settlementBusy = false;
 let settlementPanelOpen = false;
@@ -540,8 +522,8 @@ function isOverdue(r) {
 function isPending(r) {
   return r.status === "완료" && r.billing !== "완료" && !isOverdue(r);
 }
-function monthKeyOf(r) {
-  const d = r.doneDate || r.dueDate || r.orderDate || "";
+function orderMonthKey(r) {
+  const d = r.orderDate || "";
   return d ? d.slice(0,7) : "미정";
 }
 function monthLabel(k) {
@@ -572,59 +554,23 @@ function ensureXlsx() {
 }
 
 const SELECTED_EXCEL_HEADERS = ["관리번호","VUD","라인","공정","설비호기","제품 S/N","품목","수량","단가","금액","수주일","납품예정일","납품완료일","상태","현장담당자","청구여부","비고"];
-function selectedExcelRows(key) {
-  return DATA[key].filter(r => selected[key].has(r.rowIndex)).map(r => [
-    r.id, r.vud, r.line, r.process, r.eqp, r.sn, r.item, r.qty, r.price, r.amount,
-    r.orderDate, r.dueDate, r.doneDate, r.status, r.owner, r.billing, r.note,
-  ]);
+function orderExcelRows(rows) {
+  return rows.map(r=>[r.id,r.vud,r.line,r.process,r.eqp,r.sn,r.item,r.qty,r.price,r.amount,r.orderDate,r.dueDate,r.doneDate,r.status,r.owner,r.billing,r.note]);
 }
-async function exportSelectedExcel(key) {
-  // Snapshot only the checked item rows; exporting never calls the Sheets API.
-  const rows = selectedExcelRows(key);
-  if (!rows.length) { showToast("선택한 항목이 없어요"); return; }
+async function saveOrdersExcel(key) {
+  const chosen = IS_OWNER && selected[key].size > 0;
+  const rows = chosen ? DATA[key].filter(r=>selected[key].has(r.rowIndex)) : filteredOrders(key);
+  const cells=orderExcelRows(rows);
+  if (!cells.length) return showToast("내보낼 데이터가 없어요");
   try {
     await ensureXlsx();
-    const ws = XLSX.utils.aoa_to_sheet([SELECTED_EXCEL_HEADERS, ...rows]);
-    ws["!cols"] = SELECTED_EXCEL_HEADERS.map(() => ({wch:14}));
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "선택수주");
-    XLSX.writeFile(wb, `YHT_${key === "mt" ? "유지보수" : "국소배기"}_선택${rows.length}건_${TODAY || ""}.xlsx`);
-    showToast(`선택 ${rows.length}건을 엑셀로 내보냈습니다`);
-  } catch (e) { showToast(e.message || "엑셀 다운로드에 실패했습니다"); }
-}
-
-async function exportExcel(mode) {
-  const category = document.getElementById("exportCategorySelect").value; // "all" | "mt" | "gas"
-  const showGubunCol = category === "all";
-  const headers = showGubunCol
-    ? ["구분","관리번호","VUD(거래처)","라인","공정","설비호기","제품 S/N","품목","수량","단가","금액","수주일","납품예정일","납품(완료)일","상태","현장담당자","청구여부","비고"]
-    : ["관리번호","VUD(거래처)","라인","공정","설비호기","제품 S/N","품목","수량","단가","금액","수주일","납품예정일","납품(완료)일","상태","현장담당자","청구여부","비고"];
-  const aoa = [headers];
-  let count = 0;
-  [["mt","유지보수"],["gas","국소배기(신규납품)"]].forEach(([key, label]) => {
-    if (category !== "all" && category !== key) return;
-    DATA[key].forEach(r => {
-      if (mode === "done" && r.status !== "완료") return;
-      if (mode === "unsettled" && !(r.status === "완료" && r.billing !== "완료")) return;
-      const row = [
-        r.id, r.vud, r.line, r.process, r.eqp, r.sn, r.item, r.qty, r.price, r.amount,
-        r.orderDate, r.dueDate, r.doneDate, r.status, r.owner, r.billing, r.note,
-      ];
-      aoa.push(showGubunCol ? [label, ...row] : row);
-      count++;
-    });
-  });
-  if (count === 0) { showToast("내보낼 데이터가 없어요"); return; }
-  try { await ensureXlsx(); }
-  catch (e) { showToast(e.message); return; }
-  const ws = XLSX.utils.aoa_to_sheet(aoa);
-  ws["!cols"] = headers.map(() => ({ wch: 14 }));
-  const wb = XLSX.utils.book_new();
-  const sheetTitle = mode === "done" ? "납품완료" : mode === "unsettled" ? "미정산" : "수주목록";
-  const categoryLabel = category === "mt" ? "유지보수_" : category === "gas" ? "국소배기_" : "";
-  XLSX.utils.book_append_sheet(wb, ws, sheetTitle);
-  XLSX.writeFile(wb, `YHT_${categoryLabel}${sheetTitle}_${TODAY || ""}.xlsx`);
-  showToast(`${sheetTitle} ${count}건을 엑셀로 내보냈습니다`);
+    const ws=XLSX.utils.aoa_to_sheet([SELECTED_EXCEL_HEADERS,...cells]);
+    ws["!cols"]=SELECTED_EXCEL_HEADERS.map(()=>({wch:14}));
+    const wb=XLSX.utils.book_new(), label=chosen?"선택수주":"수주목록";
+    XLSX.utils.book_append_sheet(wb,ws,label);
+    XLSX.writeFile(wb,`YHT_${key==="mt"?"유지보수":"국소배기"}_${label}${cells.length}건_${TODAY||""}.xlsx`);
+    showToast(`${label} ${cells.length}건을 엑셀로 저장했습니다`);
+  } catch(e){showToast(e.message||"엑셀 저장에 실패했습니다");}
 }
 
 const SNAPSHOT_KEY = "yht_recent_snapshot_v2";
@@ -779,7 +725,7 @@ function renderDashboard(m) {
         <div class="section-head">빠른 작업</div>
         <div class="section-body">
           <div class="quick-grid">
-            ${IS_OWNER?`<button class="quick-btn" onclick="openAddModal('mt')">＋ 유지보수 등록</button><button class="quick-btn" onclick="openAddModal('gas')">＋ 국소배기 등록</button>`:''}
+            ${IS_OWNER?`<button class="quick-btn" onclick="openPasteModal('mt')">＋ 유지보수 등록</button><button class="quick-btn" onclick="openPasteModal('gas')">＋ 국소배기 등록</button>`:''}
             <button class="quick-btn" onclick="switchTab('mt')">🔧 유지보수 목록</button>
             <button class="quick-btn" onclick="switchTab('gas')">🌬️ 국소배기 목록</button>
             <button class="quick-btn" onclick="switchTab('monthly')">📊 월별 집계</button>
@@ -796,9 +742,9 @@ function switchTab(tab) {
   document.querySelectorAll('.nav-btn[data-tab]').forEach(x=>x.classList.toggle('active',x.dataset.tab===tab));
   document.querySelectorAll('.tabcontent').forEach(x=>x.style.display='none');
   const target=document.getElementById('tab-'+tab); if(target) target.style.display='block';
-  const titles={dashboard:'대시보드',mt:'유지보수 수주관리',gas:'국소배기 수주관리',monthly:'월별 집계'};
-  const title=document.getElementById('pageTitle'); if(title) title.textContent=titles[tab]||tab;
-  if(tab==='mt') renderTab('mt'); if(tab==='gas') renderTab('gas'); if(tab==='monthly') renderMonthly();
+  const titles={prices:"단가리스트",dashboard:'대시보드',mt:'유지보수 수주관리',gas:'국소배기 수주관리',monthly:'월별 집계'};
+  document.title=(titles[tab]||tab)+' · YHT 관리장부';
+  if(tab==='mt') renderTab('mt'); if(tab==='gas') renderTab('gas'); if(tab==='monthly') renderMonthly(); if(tab==='prices') renderPriceList();
 }
 
 function visibleRows(key) {
@@ -808,6 +754,7 @@ function visibleRows(key) {
     const q = st.search.toLowerCase();
     r = r.filter(x => [x.id,x.item,x.owner,x.vud].some(v => String(v||"").toLowerCase().includes(q)));
   }
+  if (st.year !== "전체") r = r.filter(x=>String(x.orderDate||"").startsWith(st.year+"-"));
   if (st.filterMode === "inprogress") r = r.filter(x => x.status !== "완료");
   if (st.filterMode === "done") r = r.filter(x => x.status === "완료");
   if (st.filterMode === "unsettled") r = r.filter(x => x.status === "완료" && x.billing !== "완료");
@@ -815,14 +762,23 @@ function visibleRows(key) {
   return r;
 }
 
+function filteredOrders(key, rows=visibleRows(key)) {
+  const m=tabState[key].month;
+  return m==="전체"?rows:rows.filter(r=>orderMonthKey(r)===m);
+}
+function orderYearHtml(key) {
+  const current=tabState[key].year, years=[...new Set(DATA[key].map(r=>String(r.orderDate||"").slice(0,4)).filter(y=>/^\d{4}$/.test(y)))].sort().reverse();
+  return `<label>수주 연도<select onchange="setOrderYear('${key}',this.value)"><option value="전체">전체 연도</option>${years.map(y=>`<option value="${y}" ${y===current?"selected":""}>${y}년</option>`).join("")}</select></label>`;
+}
+function setOrderYear(key,year){const st=tabState[key];st.year=year;st.month="전체";st.page=1;renderTab(key);}
 function monthSelectHtml(key, rowsForCount) {
   const groups = {};
-  rowsForCount.forEach(r => { const k = monthKeyOf(r); groups[k] = (groups[k]||0)+1; });
+  rowsForCount.forEach(r => { const k = orderMonthKey(r); groups[k] = (groups[k]||0)+1; });
   const keys = Object.keys(groups).sort().reverse();
   const st = tabState[key];
   let opts = `<option value="전체" ${st.month==="전체"?"selected":""}>전체 (${rowsForCount.length}건)</option>`;
   keys.forEach(k => { opts += `<option value="${esc(k)}" ${st.month===k?"selected":""}>${monthLabel(k)} (${groups[k]}건)</option>`; });
-  return `<select onchange="setMonth('${key}', this.value)">${opts}</select>`;
+  return `<select class="layout-month-select" onchange="setMonth('${key}', this.value)">${opts}</select>`;
 }
 
 function setMonth(key, v) { tabState[key].month = v; tabState[key].page=1;  renderTab(key); }
@@ -849,15 +805,15 @@ function orderValue(value){return value === '' || value == null ? '—' : esc(va
 function orderMoney(value){return value === '' || value == null ? '—' : esc(Number(value).toLocaleString('ko-KR'));}
 function orderBillingLabel(r){return r.billing==='완료'?'정산완료':'미정산';}
 function orderStatus(r){
- return `<span class="badge ${esc(r.status)}">${esc(r.status||'—')}</span><div class="order-status-note">${esc(orderBillingLabel(r))}</div>`;
+ return `<span class="badge ${esc(r.status)}">${esc(r.status||'—')}</span>${r.status==='완료'?`<div class="order-status-note">${esc(orderBillingLabel(r))}</div>`:''}`;
 }
 function orderRowClass(key,r){return selected[key].has(r.rowIndex)?'order-picked':isOverdue(r)?'order-flagged':'';}
 function orderTableHtml(key,rows){
  const all=rows.length>0&&rows.every(r=>selected[key].has(r.rowIndex));
  const ids=rows.map(r=>r.rowIndex);
- const headers=['관리번호','VUD','라인','공정','설비호기','제품S/N','품목','수량','단가','금액','현장담당자','수주일 / 납품완료일','상태','비고'];
- const widths=[3,9,6,3.5,4.5,5,5,18,3,6,7,5.5,8,6,10];
- return `<div class="orders-desktop"><table class="orders-table" aria-label="수주목록"><colgroup>${widths.map(w=>`<col style="width:${w}%">`).join('')}</colgroup><thead><tr><th>${IS_OWNER?`<input type="checkbox" aria-label="이 월 전체 선택" ${all?'checked':''} onchange="toggleOrderMonth('${key}',[${ids}],this.checked)">`:''}</th>${headers.map(h=>`<th scope="col">${h}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr class="${orderRowClass(key,r)}"><td>${orderCheckbox(key,r)}</td><td>${orderValue(r.id)}</td><td>${orderValue(r.vud)}</td><td>${orderValue(r.line)}</td><td>${orderValue(r.process)}</td><td>${orderValue(r.eqp)}</td><td>${orderValue(r.sn)}</td><td>${orderValue(r.item)}</td><td class="order-number">${orderValue(r.qty)}</td><td class="order-number">${orderMoney(r.price)}</td><td class="order-number">${orderMoney(r.amount)}</td><td>${orderValue(r.owner)}</td><td><div><span class="order-status-note">수주</span><br>${orderValue(r.orderDate)}</div>${r.status==='완료'?`<div class="order-status-note">납품완료<br>${orderValue(r.doneDate)}</div>`:''}</td><td>${orderStatus(r)}</td><td class="order-note">${orderValue(r.note)}</td></tr>`).join('')}</tbody></table></div><div class="orders-mobile">${rows.map(r=>`<div class="order-mobile-row ${orderRowClass(key,r)}"><div class="order-mobile-head">${orderCheckbox(key,r)}<b>${orderValue(r.id)}</b><span class="badge ${esc(r.status)}">${orderValue(r.status)}</span></div><details><summary><span>${orderValue(r.item)}</span><b>${orderValue(r.qty)}개</b></summary><div class="order-mobile-meta"><span>${orderValue(r.vud)} · ${orderValue(r.line)} / ${orderValue(r.process)}</span><b>${orderMoney(r.amount)}원</b></div><dl>${[['설비호기',r.eqp],['제품S/N',r.sn],['단가',orderMoney(r.price)],['현장담당자',r.owner],['수주일',r.orderDate],...(r.status==='완료'?[['납품완료일',r.doneDate]]:[]),['정산상태',orderBillingLabel(r)],['비고',r.note]].map(([k,v])=>`<dt>${k}</dt><dd>${orderValue(v)}</dd>`).join('')}</dl></details></div>`).join('')}</div>`;
+ const headers=['관리번호','품목','거래처','상태','수주일','수량','금액'];
+ const widths=[4,13,32,12,11,11,6,11];
+ return `<div class="orders-desktop"><table class="orders-table" aria-label="수주목록"><colgroup>${widths.map(w=>`<col style="width:${w}%">`).join('')}</colgroup><thead><tr><th>${IS_OWNER?`<input type="checkbox" aria-label="이 월 전체 선택" ${all?'checked':''} onchange="toggleOrderMonth('${key}',[${ids}],this.checked)">`:''}</th>${headers.map(h=>`<th scope="col">${h}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr class="${orderRowClass(key,r)}"><td>${orderCheckbox(key,r)}</td><td><b>${orderValue(r.id)}</b></td><td class="layout-item">${orderValue(r.item)}<details><summary>상세</summary><dl>${[['라인',r.line],['공정',r.process],['설비호기',r.eqp],['제품 S/N',r.sn],['단가',orderMoney(r.price)],['납품예정일',r.dueDate],['납품완료일',r.doneDate],['담당자',r.owner],['비고',r.note]].map(([a,v])=>`<dt>${a}</dt><dd>${orderValue(v)}</dd>`).join('')}</dl></details></td><td>${orderValue(r.vud)}</td><td>${orderStatus(r)}</td><td>${orderValue(r.orderDate)}</td><td class="order-number">${orderValue(r.qty)}</td><td class="order-number">${orderMoney(r.amount)}</td></tr>`).join('')}</tbody></table></div><div class="orders-mobile">${rows.map(r=>`<div class="order-mobile-row ${orderRowClass(key,r)}"><div class="order-mobile-head">${orderCheckbox(key,r)}<b>${orderValue(r.id)}</b><span class="badge ${esc(r.status)}">${orderValue(r.status)}</span></div><details><summary><span>${orderValue(r.item)}</span><b>${orderValue(r.qty)}개</b></summary><div class="order-mobile-meta"><span>${orderValue(r.vud)} · ${orderValue(r.line)} / ${orderValue(r.process)}</span><b>${orderMoney(r.amount)}원</b></div><dl>${[['설비호기',r.eqp],['제품S/N',r.sn],['단가',orderMoney(r.price)],['현장담당자',r.owner],['수주일',r.orderDate],...(r.status==='완료'?[['납품완료일',r.doneDate]]:[]),['정산상태',orderBillingLabel(r)],['비고',r.note]].map(([k,v])=>`<dt>${k}</dt><dd>${orderValue(v)}</dd>`).join('')}</dl></details></div>`).join('')}</div>`;
 }
 function toggleOrderMonth(key,ids,checked){
  if(!IS_OWNER)return;
@@ -934,26 +890,26 @@ function paginateOrders(rows,size,page){
 function renderTab(key, searchOnly = false) {
   const st = tabState[key];
   const container=document.getElementById('tab-'+key);
-  const viewKey=JSON.stringify([st.filterMode,st.search,st.month,st.pageSize,st.page]);
+  const viewKey=JSON.stringify([st.filterMode,st.search,st.year,st.month,st.pageSize,st.page]);
   const sameView=container.dataset.orderView===viewKey;
   const oldList=container.querySelector('.orders-list');
   const listScroll=sameView&&oldList?oldList.scrollTop:0;
   const pageScroll={x:window.scrollX,y:window.scrollY};
-  const openDetails=sameView?[...container.querySelectorAll('.orders-mobile details')].map(d=>d.open):[];
+  const openDetails=sameView?[...container.querySelectorAll('.orders-mobile details,.layout-item details')].map(d=>d.open):[];
   const active=document.activeElement;
   const restoreSearch=container.contains(active)&&active.matches('input[type="text"]');
   const restorePageSize=container.contains(active)&&active.matches(".order-page-size");
   const restoreCheckbox=container.contains(active)&&active.matches('input[type="checkbox"]')?active.getAttribute('aria-label'):null;
   const caret=restoreSearch?{start:active.selectionStart,end:active.selectionEnd}:null;
   const allVisible = visibleRows(key);
-  const filtered = st.month === "전체" ? allVisible : allVisible.filter(r => monthKeyOf(r) === st.month);
+  const filtered = filteredOrders(key,allVisible);
   const groups = {};
   const monthCounts={};
-  filtered.forEach(r=>{const k=monthKeyOf(r);monthCounts[k]=(monthCounts[k]||0)+1;});
-  const ordered=filtered.slice().sort((a,b)=>monthKeyOf(b).localeCompare(monthKeyOf(a)));
+  filtered.forEach(r=>{const k=orderMonthKey(r);monthCounts[k]=(monthCounts[k]||0)+1;});
+  const ordered=filtered.slice().sort((a,b)=>orderMonthKey(b).localeCompare(orderMonthKey(a)));
   const pagination=paginateOrders(ordered,st.pageSize,st.page);
   st.page=pagination.page;
-  pagination.rows.forEach(r => { const k = monthKeyOf(r); (groups[k] = groups[k]||[]).push(r); });
+  pagination.rows.forEach(r => { const k = orderMonthKey(r); (groups[k] = groups[k]||[]).push(r); });
   const keys = Object.keys(groups).sort().reverse();
   const body = keys.map(k => `<div class="month-header">${monthLabel(k)} (${monthCounts[k]}건)</div>` + orderTableHtml(key,groups[k])).join("");
 
@@ -967,32 +923,33 @@ function renderTab(key, searchOnly = false) {
   const canPartial = singleOrder && singleOrder.status !== "완료" && Number(singleOrder.qty)>1;
   const ownerButtons = IS_OWNER ? `
     <span class="selection-count" role="status">선택 ${selCount}건${hiddenSelected ? ` · 현재 목록 밖 ${hiddenSelected}건` : ""}</span>
-    <button class="bulk-btn" style="background:var(--steel);min-height:44px" ${selCount===0?"disabled":""} onclick="exportSelectedExcel('${key}')">⬇ 선택 ${selCount}건 엑셀 다운로드</button>
     <button type="button" class="filter-btn" ${!selCount?"disabled":""} onclick="clearOrderSelection('${key}')">선택 해제</button>
-    <button class="bulk-btn" style="background:var(--steel)" ${singleOrder?"":"disabled"} onclick="editSelectedOrder('${key}')">수정</button>
     <button class="bulk-btn" style="background:var(--steel)" ${canPartial?"":"disabled"} onclick="partialSelectedOrder('${key}')">부분납품</button>
-    <button class="bulk-btn" style="background:var(--steel)" ${doneSelected?"":"disabled"} onclick="doSelectedStatement('${key}')">📄 선택 ${selCount}건 거래명세서 쓰기</button>
-    ${st.filterMode !== "settled" ? `<button class="bulk-btn" ${canComplete?"":"disabled"} onclick="doBulkComplete('${key}')">✅ 선택 ${selCount}건 납품처리</button>` : ""}
+    <button class="bulk-btn" style="background:var(--steel)" ${doneSelected?"":"disabled"} onclick="doSelectedStatement('${key}')">거래명세서 작성</button>
+    ${st.filterMode !== "settled" ? `<button class="bulk-btn" ${canComplete?"":"disabled"} onclick="doBulkComplete('${key}')">납품완료 처리</button>` : ""}
+    <details class="layout-more"><summary>더보기</summary><div class="row"><button class="bulk-btn" style="background:var(--steel)" ${singleOrder?"":"disabled"} onclick="editSelectedOrder('${key}')">수정</button>
     ${!["inprogress","settled"].includes(st.filterMode) ? `<button class="bulk-btn" style="background:#8A8A8A" ${selCount===0||hiddenSelected?"disabled":""} onclick="doUndoComplete('${key}')">↩️ 선택 ${selCount}건 납품취소</button>` : ""}
     ${st.filterMode !== "inprogress" ? `<button class="bulk-btn" style="background:var(--wait)" ${selCount===0||hiddenSelected||settlementBusy?"disabled":""} onclick="doBulkSettle('${key}')">→ 선택 ${selCount}건 정산함</button>` : ""}
     ${!["inprogress","done"].includes(st.filterMode) ? `<button class="bulk-btn" ${settlementBusy||!selCount||hiddenSelected||![...selected[key]].every(id=>DATA[key].some(r=>r.rowIndex===id&&r.billing==="완료"))?"disabled":""} onclick="cancelSettlement('${key}')">↩ 정산 취소</button>` : ""}
-    <button class="bulk-btn" style="background:var(--danger)" ${selCount===0||hiddenSelected?"disabled":""} onclick="doDelete('${key}')">🗑️ 선택 ${selCount}건 삭제</button>
-    <button class="bulk-btn" style="background:#6B5B95" onclick="openAddModal('${key}')">➕ 등록</button>
+    <button class="bulk-btn" style="background:var(--danger)" ${selCount===0||hiddenSelected?"disabled":""} onclick="doDelete('${key}')">🗑️ 선택 ${selCount}건 삭제</button></div></details>
   ` : "";
-
+  const sum=condition=>filtered.reduce((total,r)=>total+(condition(r)?Number(r.amount)||0:0),0);
+  const metrics=[["수주금액",sum(()=>true)],["납품완료",sum(r=>r.status==="완료")],["정산완료",sum(r=>r.status==="완료"&&r.billing==="완료")],["미정산",sum(r=>r.status==="완료"&&r.billing!=="완료")]];
+  const label=key==="mt"?"유지보수":"국소배기";
   const nextMarkup = `
-    <div class="settlement-layout orders-layout"><div class="panel">
-      <div class="toolbar">
+    ${IS_OWNER?`<div class="panel layout-registration"><div><strong>신규 수주 등록</strong><div class="order-status-note">엑셀에서 복사한 여러 품목을 한 번에 등록</div></div><button type="button" class="btn-primary" onclick="openPasteModal('${key}')">＋ 신규 등록</button></div>`:""}
+    <div class="toolbar layout-controls">
         <div class="row">
           <input type="text" placeholder="🔍 관리번호 / 품목 / 담당자 검색" value="${esc(st.search)}" oncompositionstart="startOrderSearch('${key}',this)" oncompositionend="finishOrderSearch('${key}', this)" oninput="handleOrderSearch('${key}', this, event)" style="flex:1;min-width:150px">
-          ${monthSelectHtml(key, allVisible)}
+          ${orderYearHtml(key)}
+          <label>수주 월${monthSelectHtml(key, allVisible)}</label>
           <select class="order-page-size" aria-label="수주목록 표시 건수" onchange="setOrderPageSize('${key}',this.value==='all'?'all':Number(this.value))">${[10,30,50,100,"all"].map(size=>`<option value="${size}" ${st.pageSize===size?'selected':''}>${size==="all"?"전체 보기":size+"건 보기"}</option>`).join('')}</select>
         </div>
-        <div class="row" style="justify-content:space-between">
-          <div class="filters">${filterHtml}</div>
-          <div class="row order-actions">${ownerButtons}</div>
-        </div>
-      </div>
+        <div class="filters">${filterHtml}</div>
+    </div>
+    <div class="settlement-layout orders-layout"><div class="panel">
+      <div class="layout-tools"><div><strong>${label} 수주목록</strong><div class="layout-list-count order-status-note">${filtered.length}건</div></div><div class="row order-actions">${ownerButtons}<button type="button" class="filter-btn" ${!(IS_OWNER&&selCount)&&!filtered.length?"disabled":""} onclick="saveOrdersExcel('${key}')">↓ 엑셀 저장</button></div></div>
+      <div class="layout-metrics">${metrics.map(([name,total])=>`<div><span>${name}</span><b>${won(total)}</b></div>`).join("")}</div>
       <div class="orders-list">${body || '<div class="empty">해당하는 건이 없습니다</div>'}</div>
       <div class="order-pagination"><span>전체 ${filtered.length}건 · ${filtered.length?pagination.start+1:0}–${pagination.end}건 표시</span><div class="row" ${st.pageSize==="all"?'hidden style="display:none"':""}><button class="filter-btn" ${st.page===1?'disabled':''} onclick="setOrderPage('${key}',${st.page-1})">이전</button><span>${st.page} / ${pagination.pages} 페이지</span><button class="filter-btn" ${st.page===pagination.pages?'disabled':''} onclick="setOrderPage('${key}',${st.page+1})">다음</button></div></div>
 ${!IS_OWNER ? '<div class="lock-note">👀 보기 전용 계정입니다. 등록/수정은 관리자만 가능해요.</div>' : ''}
@@ -1000,18 +957,18 @@ ${!IS_OWNER ? '<div class="lock-note">👀 보기 전용 계정입니다. 등록
   `;
   if(searchOnly && container.querySelector('.orders-list')){
     const next=document.createElement('div');next.innerHTML=nextMarkup;
-    for(const selector of ['.orders-list','.order-pagination','.order-actions']){
+    for(const selector of ['.orders-list','.order-pagination','.order-actions','.layout-metrics','.layout-list-count']){
       const current=container.querySelector(selector),replacement=next.querySelector(selector);
       if(current&&replacement)current.innerHTML=replacement.innerHTML;
     }
-    const month=container.querySelector('.toolbar select'),nextMonth=next.querySelector('.toolbar select');
+    const month=container.querySelector('.layout-month-select'),nextMonth=next.querySelector('.layout-month-select');
     if(month&&nextMonth)month.innerHTML=nextMonth.innerHTML;
-    container.dataset.orderView=JSON.stringify([st.filterMode,st.search,st.month,st.pageSize,st.page]);
+    container.dataset.orderView=JSON.stringify([st.filterMode,st.search,st.year,st.month,st.pageSize,st.page]);
     return;
   }
   container.innerHTML=nextMarkup;
-  container.dataset.orderView=JSON.stringify([st.filterMode,st.search,st.month,st.pageSize,st.page]);
-  container.querySelectorAll('.orders-mobile details').forEach((d,i)=>d.open=!!openDetails[i]);
+  container.dataset.orderView=JSON.stringify([st.filterMode,st.search,st.year,st.month,st.pageSize,st.page]);
+  container.querySelectorAll('.orders-mobile details,.layout-item details').forEach((d,i)=>d.open=!!openDetails[i]);
   let nextFocus=null;
   if(restoreSearch)nextFocus=container.querySelector('input[type="text"]');
   else if(restorePageSize)nextFocus=container.querySelector('.order-page-size');
@@ -1022,7 +979,11 @@ ${!IS_OWNER ? '<div class="lock-note">👀 보기 전용 계정입니다. 등록
   window.scrollTo(pageScroll.x,pageScroll.y);
 }
 
+let monthlyYear="전체";
+function setMonthlyYear(year){monthlyYear=year;renderMonthly();}
 function renderMonthly() {
+  const years=[...new Set([...DATA.mt,...DATA.gas].flatMap(r=>[r.orderDate,r.status==="완료"?r.doneDate:""]).map(d=>String(d||"").slice(0,4)).filter(y=>/^\d{4}$/.test(y)))].sort().reverse();
+  const filter=`<label>집계 연도 <select onchange="setMonthlyYear(this.value)"><option value="전체">전체 연도</option>${years.map(y=>`<option value="${y}" ${monthlyYear===y?"selected":""}>${y}년</option>`).join("")}</select></label>`;
   function block(key, label) {
     const buckets = {}; // "YYYY-MM" -> {order,done,settle}
     DATA[key].forEach(r => {
@@ -1035,6 +996,7 @@ function renderMonthly() {
       }
     });
 
+    if(monthlyYear!=="전체")Object.keys(buckets).filter(m=>!m.startsWith(monthlyYear+"-")).forEach(m=>delete buckets[m]);
     // 연도별 합계 집계
     const yearTotals = {}; // "YYYY" -> {order,done,settle}
     Object.keys(buckets).forEach(m => {
@@ -1071,7 +1033,7 @@ function renderMonthly() {
       <tbody>${rows || '<tr><td colspan=4 class="empty">데이터 없음</td></tr>'}</tbody></table>
     </div>`;
   }
-  document.getElementById("tab-monthly").innerHTML = `<div class="panel" style="padding:16px">${block("mt","유지보수")}${block("gas","국소배기(신규납품)")}</div>`;
+  document.getElementById("tab-monthly").innerHTML = `<div class="panel" style="padding:16px">${filter}<div style="height:14px"></div>${block("mt","유지보수")}${block("gas","국소배기(신규납품)")}</div>`;
 }
 
 function doUndoComplete(key) {
@@ -1248,10 +1210,12 @@ function parsePasteText(text) {
 }
 
 function openPasteModal(key, fromAdd = false) {
+  if(!IS_OWNER)return;
   document.getElementById("pasteArea").value = "";
   document.getElementById("pasteModal").dataset.key = key;
   document.getElementById("pasteModal").dataset.fromAdd = fromAdd ? "1" : "0";
   document.getElementById("pasteModal").classList.add("open");
+  document.getElementById("pasteArea").focus();
 }
 function closePasteModal(returnToAdd = false) {
   const modal = document.getElementById("pasteModal");
@@ -1314,6 +1278,19 @@ function fetchPriceItems() {
   return priceItemsPromise;
 }
 
+async function renderPriceList(refresh=false){
+  const panel=document.getElementById("tab-prices");
+  const link='<a class="filter-btn" href="https://docs.google.com/spreadsheets/d/1LkVCut8GWG3nS6l3WgAAiqzh6RvGgf2ehlvAis7ilGY/edit?gid=1465570087" target="_blank" rel="noopener noreferrer">Google Sheets 단가표 열기 ↗</a>';
+  panel.innerHTML=`<div class="panel"><div class="layout-tools"><strong>단가리스트</strong><div class="row">${IS_OWNER?link+'<button type="button" class="filter-btn" onclick="renderPriceList(true)">새로고침</button>':""}</div></div><div id="priceListBody" style="padding:0 14px 14px">${IS_OWNER?"단가표를 불러오는 중…":"단가리스트를 보려면 관리자 모드로 전환해 주세요."}</div></div>`;
+  if(!IS_OWNER)return;
+  const body=panel.querySelector("#priceListBody");
+  if(refresh)priceItemsLoadedAt=0;
+  try{
+    const items=await fetchPriceItems();
+    if(!body.isConnected)return;
+    body.innerHTML=items.length?`<table class="agg"><thead><tr><th>품목</th><th>단가</th></tr></thead><tbody>${items.map(r=>`<tr><td>${esc(r.item)}</td><td>${won(r.price)}</td></tr>`).join("")}</tbody></table>`:"등록된 단가가 없습니다.";
+  }catch(e){if(body.isConnected)body.textContent="단가표를 불러오지 못했어요. "+e.message;}
+}
 function renderPriceChoices(items) {
   const select = document.getElementById("f_itemSelect");
   const chosen = select.value;
