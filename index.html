@@ -243,6 +243,30 @@
 .orders-table .layout-item details{margin-top:3px}.orders-table .layout-item summary{color:var(--steel);cursor:pointer;font-size:11px}.orders-table .layout-item dl{display:grid;grid-template-columns:auto 1fr;gap:2px 8px;margin:4px 0 0}.orders-table .layout-item dd{margin:0;overflow-wrap:anywhere}
 .layout-main{width:100%;min-width:0}.layout-main .orders-layout{margin-top:0}
 @media(max-width:700px){.layout-tabs .nav-btn{padding-inline:8px;font-size:12px}.layout-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.layout-metrics>div:nth-child(3){border-left:0}.layout-metrics>div:nth-child(n+3){border-top:1px solid var(--line)}.layout-tools .order-actions .selection-count{width:auto}.layout-header .top-actions{gap:6px}.layout-tools button,.layout-registration button{min-height:44px}}
+.layout-main{padding-inline:clamp(10px,1.35vw,25px)}
+.layout-main .main-inner{max-width:none}
+.layout-main .orders-list{max-height:none;overflow:visible}
+.layout-controls .layout-filter-row{display:grid;grid-template-columns:minmax(180px,1fr) minmax(108px,132px) minmax(128px,172px) minmax(106px,132px);gap:8px;align-items:end}
+.layout-filter-row label{display:grid;grid-template-rows:17px 40px;min-width:0}
+.layout-filter-row select,.layout-filter-row input[type=text]{height:40px;width:100%;min-width:0;box-sizing:border-box;margin:0}
+.orders-layout>.panel:first-child{overflow:visible}
+.layout-more{position:relative}.layout-more summary{white-space:nowrap}
+.layout-more .row{position:absolute;right:0;top:calc(100% + 5px);z-index:12;display:grid;gap:2px;min-width:165px;padding:5px;background:var(--panel);border:1px solid var(--line);border-radius:8px;box-shadow:0 6px 22px #0002}
+.layout-more .row .bulk-btn{text-align:left;width:100%;background:transparent;color:var(--ink);border:0;border-radius:5px;white-space:nowrap;padding:8px}
+.layout-more .row .bulk-btn:enabled:hover{background:var(--steel-soft)}.layout-more .row .bulk-btn:disabled{opacity:.45}
+.layout-more .row button:last-child{color:var(--danger);border-top:1px solid var(--line)}
+.layout-id{border:0;background:transparent;padding:3px 0;color:var(--steel);font:inherit;font-weight:700;text-decoration:underline;text-underline-offset:3px;overflow-wrap:anywhere;text-align:left;cursor:pointer;max-width:100%}
+.layout-main .orders-table{font-size:13px}.layout-main .orders-table th{font-size:12px}
+.layout-main .orders-table th,.layout-main .orders-table td{padding:9px 7px}
+.layout-main .orders-table td:nth-child(7){text-align:right}
+.layout-main .orders-table td:nth-child(8){word-break:normal;text-align:left}
+.layout-item{white-space:normal;overflow-wrap:anywhere}
+.layout-mobile-item{font-weight:700;overflow-wrap:anywhere;margin:5px 0}
+.layout-detail-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 14px;margin:12px 0}
+.layout-detail-grid div{border-bottom:1px solid var(--line);padding:4px 0}
+.layout-detail-grid dt{font-size:11px;color:var(--sub)}.layout-detail-grid dd{margin:2px 0 0;white-space:pre-wrap;overflow-wrap:anywhere}
+#orderDetailDialog{width:min(520px,calc(100% - 28px));max-height:calc(100% - 28px);border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--ink);padding:18px}
+@media(max-width:700px){.layout-controls .layout-filter-row{grid-template-columns:repeat(3,minmax(0,1fr))}.layout-filter-row .layout-search{grid-column:1/-1}.layout-filter-row select{padding-inline:5px}.layout-id{min-height:38px}}
 </style>
 </head>
 <body>
@@ -257,6 +281,15 @@
 </div></main>
 <div class="toast" id="toast"></div>
 
+<dialog id="orderDetailDialog" aria-labelledby="orderDetailTitle">
+  <div class="modal-title" id="orderDetailTitle">수주 상세</div>
+  <strong id="orderDetailItem"></strong>
+  <dl class="layout-detail-grid" id="orderDetailFields"></dl>
+  <div class="modal-actions">
+    <button type="button" class="btn-secondary" onclick="document.getElementById('orderDetailDialog').close()">닫기</button>
+    <button type="button" class="btn-primary" id="editOrderFromDetail">수정</button>
+  </div>
+</dialog>
 <div class="modal-overlay" id="settingsModal" role="dialog" aria-modal="true" aria-label="설정">
   <div class="modal-box" style="max-width:400px">
     <div class="modal-title">⚙ 설정</div>
@@ -808,12 +841,29 @@ function orderStatus(r){
  return `<span class="badge ${esc(r.status)}">${esc(r.status||'—')}</span>${r.status==='완료'?`<div class="order-status-note">${esc(orderBillingLabel(r))}</div>`:''}`;
 }
 function orderRowClass(key,r){return selected[key].has(r.rowIndex)?'order-picked':isOverdue(r)?'order-flagged':'';}
+function orderDetailLink(key,r){
+ return `<button type="button" class="layout-id" aria-label="${esc(r.id)} ${esc(r.item)} 상세" onclick="showOrderDetail('${key}',${r.rowIndex})">${orderValue(r.id)}</button>`;
+}
+function showOrderDetail(key,rowIndex){
+ const r=DATA[key]?.find(x=>x.rowIndex===rowIndex);
+ if(!r)return;
+ const dialog=document.getElementById("orderDetailDialog");
+ document.getElementById("orderDetailTitle").textContent=(r.id||"관리번호 없음")+" · 수주 상세";
+ document.getElementById("orderDetailItem").textContent=r.item||"";
+ const money=v=>v===""||v==null?"":won(v);
+ const fields=[["거래처",r.vud],["담당자",r.owner],["상태",r.status],["정산 상태",r.status==="완료"?orderBillingLabel(r):"—"],["라인",r.line],["공정",r.process],["설비호기",r.eqp],["제품 S/N",r.sn],["수주일",r.orderDate],["납품예정일",r.dueDate],["납품완료일",r.doneDate],["수량",r.qty],["단가",money(r.price)],["금액",money(r.amount)],["비고",r.note]];
+ document.getElementById("orderDetailFields").innerHTML=fields.map(([name,value])=>`<div><dt>${name}</dt><dd>${orderValue(value)}</dd></div>`).join("");
+ const edit=document.getElementById("editOrderFromDetail");
+ edit.hidden=!IS_OWNER;
+ edit.onclick=()=>{if(!IS_OWNER)return;dialog.close();openEditModal(key,rowIndex);};
+ if(!dialog.open)dialog.showModal();
+}
 function orderTableHtml(key,rows){
  const all=rows.length>0&&rows.every(r=>selected[key].has(r.rowIndex));
  const ids=rows.map(r=>r.rowIndex);
- const headers=['관리번호','품목','거래처','상태','수주일','수량','금액'];
- const widths=[4,13,32,12,11,11,6,11];
- return `<div class="orders-desktop"><table class="orders-table" aria-label="수주목록"><colgroup>${widths.map(w=>`<col style="width:${w}%">`).join('')}</colgroup><thead><tr><th>${IS_OWNER?`<input type="checkbox" aria-label="이 월 전체 선택" ${all?'checked':''} onchange="toggleOrderMonth('${key}',[${ids}],this.checked)">`:''}</th>${headers.map(h=>`<th scope="col">${h}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr class="${orderRowClass(key,r)}"><td>${orderCheckbox(key,r)}</td><td><b>${orderValue(r.id)}</b></td><td class="layout-item">${orderValue(r.item)}<details><summary>상세</summary><dl>${[['라인',r.line],['공정',r.process],['설비호기',r.eqp],['제품 S/N',r.sn],['단가',orderMoney(r.price)],['납품예정일',r.dueDate],['납품완료일',r.doneDate],['담당자',r.owner],['비고',r.note]].map(([a,v])=>`<dt>${a}</dt><dd>${orderValue(v)}</dd>`).join('')}</dl></details></td><td>${orderValue(r.vud)}</td><td>${orderStatus(r)}</td><td>${orderValue(r.orderDate)}</td><td class="order-number">${orderValue(r.qty)}</td><td class="order-number">${orderMoney(r.amount)}</td></tr>`).join('')}</tbody></table></div><div class="orders-mobile">${rows.map(r=>`<div class="order-mobile-row ${orderRowClass(key,r)}"><div class="order-mobile-head">${orderCheckbox(key,r)}<b>${orderValue(r.id)}</b><span class="badge ${esc(r.status)}">${orderValue(r.status)}</span></div><details><summary><span>${orderValue(r.item)}</span><b>${orderValue(r.qty)}개</b></summary><div class="order-mobile-meta"><span>${orderValue(r.vud)} · ${orderValue(r.line)} / ${orderValue(r.process)}</span><b>${orderMoney(r.amount)}원</b></div><dl>${[['설비호기',r.eqp],['제품S/N',r.sn],['단가',orderMoney(r.price)],['현장담당자',r.owner],['수주일',r.orderDate],...(r.status==='완료'?[['납품완료일',r.doneDate]]:[]),['정산상태',orderBillingLabel(r)],['비고',r.note]].map(([k,v])=>`<dt>${k}</dt><dd>${orderValue(v)}</dd>`).join('')}</dl></details></div>`).join('')}</div>`;
+ const headers=['관리번호','품목','상태','수주일','수량','금액','담당자'];
+ const widths=[4,13,32,11,11,6,13,10];
+ return `<div class="orders-desktop"><table class="orders-table" aria-label="수주목록"><colgroup>${widths.map(w=>`<col style="width:${w}%">`).join('')}</colgroup><thead><tr><th aria-label="선택">${IS_OWNER?`<input type="checkbox" aria-label="이 월 전체 선택" ${all?'checked':''} onchange="toggleOrderMonth('${key}',[${ids}],this.checked)">`:''}</th>${headers.map(h=>`<th scope="col">${h}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr class="${orderRowClass(key,r)}"><td>${orderCheckbox(key,r)}</td><td>${orderDetailLink(key,r)}</td><td class="layout-item">${orderValue(r.item)}</td><td>${orderStatus(r)}</td><td>${orderValue(r.orderDate)}</td><td class="order-number">${orderValue(r.qty)}</td><td class="order-number">${orderMoney(r.amount)}</td><td>${orderValue(r.owner)}</td></tr>`).join('')}</tbody></table></div><div class="orders-mobile">${rows.map(r=>`<div class="order-mobile-row ${orderRowClass(key,r)}"><div class="order-mobile-head">${orderCheckbox(key,r)}${orderDetailLink(key,r)}<div style="margin-left:auto;text-align:right">${orderStatus(r)}</div></div><div class="layout-mobile-item">${orderValue(r.item)}</div><div class="order-mobile-meta"><span>${orderValue(r.orderDate)} · ${orderValue(r.owner)}</span><b>${orderValue(r.qty)}개 · ${r.amount===""||r.amount==null?"—":won(r.amount)}</b></div></div>`).join('')}</div>`;
 }
 function toggleOrderMonth(key,ids,checked){
  if(!IS_OWNER)return;
@@ -927,11 +977,11 @@ function renderTab(key, searchOnly = false) {
     <button class="bulk-btn" style="background:var(--steel)" ${canPartial?"":"disabled"} onclick="partialSelectedOrder('${key}')">부분납품</button>
     <button class="bulk-btn" style="background:var(--steel)" ${doneSelected?"":"disabled"} onclick="doSelectedStatement('${key}')">거래명세서 작성</button>
     ${st.filterMode !== "settled" ? `<button class="bulk-btn" ${canComplete?"":"disabled"} onclick="doBulkComplete('${key}')">납품완료 처리</button>` : ""}
-    <details class="layout-more"><summary>더보기</summary><div class="row"><button class="bulk-btn" style="background:var(--steel)" ${singleOrder?"":"disabled"} onclick="editSelectedOrder('${key}')">수정</button>
-    ${!["inprogress","settled"].includes(st.filterMode) ? `<button class="bulk-btn" style="background:#8A8A8A" ${selCount===0||hiddenSelected?"disabled":""} onclick="doUndoComplete('${key}')">↩️ 선택 ${selCount}건 납품취소</button>` : ""}
-    ${st.filterMode !== "inprogress" ? `<button class="bulk-btn" style="background:var(--wait)" ${selCount===0||hiddenSelected||settlementBusy?"disabled":""} onclick="doBulkSettle('${key}')">→ 선택 ${selCount}건 정산함</button>` : ""}
-    ${!["inprogress","done"].includes(st.filterMode) ? `<button class="bulk-btn" ${settlementBusy||!selCount||hiddenSelected||![...selected[key]].every(id=>DATA[key].some(r=>r.rowIndex===id&&r.billing==="완료"))?"disabled":""} onclick="cancelSettlement('${key}')">↩ 정산 취소</button>` : ""}
-    <button class="bulk-btn" style="background:var(--danger)" ${selCount===0||hiddenSelected?"disabled":""} onclick="doDelete('${key}')">🗑️ 선택 ${selCount}건 삭제</button></div></details>
+    <details class="layout-more"><summary>더보기</summary><div class="row">
+    ${!["inprogress","settled"].includes(st.filterMode) ? `<button class="bulk-btn" style="background:#8A8A8A" ${selCount===0||hiddenSelected?"disabled":""} onclick="doUndoComplete('${key}')">납품취소</button>` : ""}
+    ${st.filterMode !== "inprogress" ? `<button class="bulk-btn" style="background:var(--wait)" ${selCount===0||hiddenSelected||settlementBusy?"disabled":""} onclick="doBulkSettle('${key}')">정산함에 담기</button>` : ""}
+    ${!["inprogress","done"].includes(st.filterMode) ? `<button class="bulk-btn" ${settlementBusy||!selCount||hiddenSelected||![...selected[key]].every(id=>DATA[key].some(r=>r.rowIndex===id&&r.billing==="완료"))?"disabled":""} onclick="cancelSettlement('${key}')">정산 취소</button>` : ""}
+    <button class="bulk-btn" style="background:var(--danger)" ${selCount===0||hiddenSelected?"disabled":""} onclick="doDelete('${key}')">삭제</button></div></details>
   ` : "";
   const sum=condition=>filtered.reduce((total,r)=>total+(condition(r)?Number(r.amount)||0:0),0);
   const metrics=[["수주금액",sum(()=>true)],["납품완료",sum(r=>r.status==="완료")],["정산완료",sum(r=>r.status==="완료"&&r.billing==="완료")],["미정산",sum(r=>r.status==="완료"&&r.billing!=="완료")]];
@@ -939,11 +989,11 @@ function renderTab(key, searchOnly = false) {
   const nextMarkup = `
     ${IS_OWNER?`<div class="panel layout-registration"><div><strong>신규 수주 등록</strong><div class="order-status-note">엑셀에서 복사한 여러 품목을 한 번에 등록</div></div><button type="button" class="btn-primary" onclick="openPasteModal('${key}')">＋ 신규 등록</button></div>`:""}
     <div class="toolbar layout-controls">
-        <div class="row">
-          <input type="text" placeholder="🔍 관리번호 / 품목 / 담당자 검색" value="${esc(st.search)}" oncompositionstart="startOrderSearch('${key}',this)" oncompositionend="finishOrderSearch('${key}', this)" oninput="handleOrderSearch('${key}', this, event)" style="flex:1;min-width:150px">
+        <div class="layout-filter-row">
+          <label class="layout-search">수주 검색<input type="text" placeholder="🔍 관리번호 / 품목 / 담당자 검색" value="${esc(st.search)}" oncompositionstart="startOrderSearch('${key}',this)" oncompositionend="finishOrderSearch('${key}', this)" oninput="handleOrderSearch('${key}', this, event)"></label>
           ${orderYearHtml(key)}
           <label>수주 월${monthSelectHtml(key, allVisible)}</label>
-          <select class="order-page-size" aria-label="수주목록 표시 건수" onchange="setOrderPageSize('${key}',this.value==='all'?'all':Number(this.value))">${[10,30,50,100,"all"].map(size=>`<option value="${size}" ${st.pageSize===size?'selected':''}>${size==="all"?"전체 보기":size+"건 보기"}</option>`).join('')}</select>
+          <label>표시 건수<select class="order-page-size" aria-label="수주목록 표시 건수" onchange="setOrderPageSize('${key}',this.value==='all'?'all':Number(this.value))">${[10,30,50,100,"all"].map(size=>`<option value="${size}" ${st.pageSize===size?'selected':''}>${size==="all"?"전체 보기":size+"건 보기"}</option>`).join('')}</select></label>
         </div>
         <div class="filters">${filterHtml}</div>
     </div>
@@ -1355,6 +1405,7 @@ function openAddModal(defaultKey) {
 }
 
 function openEditModal(key, rowIndex) {
+  if(!IS_OWNER)return;
   const row = DATA[key].find(r => r.rowIndex === rowIndex);
   if (!row) return;
   editState = { key: key, rowIndex: rowIndex, original: row };
@@ -1451,6 +1502,14 @@ settlementFileInput.onchange = (e) => {
 
 document.querySelectorAll(".nav-btn[data-tab]").forEach(b => { b.onclick = () => switchTab(b.dataset.tab); });
 document.getElementById("roleBadge").onclick = toggleAdminMode;
+document.addEventListener("click",event=>{
+  document.querySelectorAll(".layout-more[open]").forEach(menu=>{
+    if(!menu.contains(event.target)||event.target.closest(".layout-more button"))menu.open=false;
+  });
+});
+document.addEventListener("keydown",event=>{
+  if(event.key==="Escape")document.querySelectorAll(".layout-more[open]").forEach(menu=>{menu.open=false;menu.querySelector("summary").focus();});
+});
 
 loadData();
 if ('serviceWorker' in navigator && location.protocol === 'https:') {
