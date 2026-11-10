@@ -323,6 +323,24 @@
   </div>
 </div>
 
+<dialog id="partialModal" aria-labelledby="partialTitle" style="width:min(460px,calc(100% - 32px));max-width:none;border:1px solid var(--line);border-radius:14px;background:var(--panel);color:var(--ink);padding:20px">
+  <form id="partialForm">
+    <div class="modal-title" id="partialTitle">부분납품</div>
+    <p id="partialItem" style="font-size:13px;overflow-wrap:anywhere"></p>
+    <div class="form-grid">
+      <div class="form-field"><label for="partialQty">이번 납품 수량</label><input id="partialQty" type="number" min="1" step="1" required inputmode="numeric"></div>
+      <div class="form-field"><label for="partialDate">납품일 (오늘)</label><input id="partialDate" type="text" readonly></div>
+    </div>
+    <p id="partialSummary" role="status" style="font-size:14px;font-weight:700"></p>
+    <p style="font-size:12px;color:var(--sub)">납품한 수량은 미정산 목록으로 넘어갑니다. 날짜를 바꾸려면 처리 후 납품완료 건을 선택해 수정하세요.</p>
+    <p id="partialError" role="alert" style="font-size:12px;color:var(--danger)"></p>
+    <div class="modal-actions">
+      <button type="button" class="btn-secondary" id="cancelPartialBtn">취소</button>
+      <button type="submit" class="btn-primary" id="savePartialBtn">부분납품 저장</button>
+    </div>
+  </form>
+</dialog>
+
 <div class="modal-overlay" id="pasteModal">
   <div class="modal-box">
     <div class="modal-title">📋 붙여넣기로 등록</div>
@@ -1076,17 +1094,68 @@ function doDelete(key) {
     showToast(`${ids.length}건 삭제했습니다`);
   }).withFailureHandler((e) => showToast("오류: " + e.message)).deleteRows(key, ids, ADMIN_PW);
 }
-function doPartial(key, rowIndex, totalQty) {
-  const input = prompt(`전체 ${totalQty}개 중 몇 개를 지금 납품완료 처리할까요? (1~${totalQty-1})`);
-  if (input === null) return;
-  const n = Number(input);
-  if (!n || n < 1 || n >= totalQty) { showToast(`1개 이상, ${totalQty}개 미만으로 입력해주세요`); return; }
-  google.script.run.withSuccessHandler((res) => {
-    DATA[key] = res.rows; selected[key].clear();
-    renderStats(); renderTab(key); renderMonthly();
-    showToast(`${n}개 부분 납품처리했습니다 (나머지 ${totalQty-n}개는 그대로 남아있어요)`);
-  }).withFailureHandler((e) => showToast("오류: " + e.message)).partialComplete(key, rowIndex, n, ADMIN_PW);
+const partialModal = document.getElementById("partialModal");
+const partialQty = document.getElementById("partialQty");
+const partialSave = document.getElementById("savePartialBtn");
+const partialCancel = document.getElementById("cancelPartialBtn");
+const partialError = document.getElementById("partialError");
+let partialDraft = null, partialBusy = false;
+function updatePartialSummary() {
+  if (!partialDraft) return;
+  const qty = Number(partialQty.value);
+  const valid = Number.isInteger(qty) && qty >= 1 && qty < partialDraft.total;
+  document.getElementById("partialSummary").textContent = valid
+    ? `이번 납품 ${qty}개 · 남은 수량 ${partialDraft.total-qty}개`
+    : `1개부터 ${partialDraft.total-1}개까지 입력해 주세요.`;
+  partialSave.disabled = partialBusy || !valid;
 }
+function doPartial(key, rowIndex) {
+  if (!IS_OWNER || partialBusy || partialModal.open) return;
+  const row = DATA[key]?.find(r => r.rowIndex === rowIndex);
+  const total = Number(row?.qty);
+  if (!row || row.status === "완료" || !Number.isInteger(total) || total < 2) return;
+  partialDraft = {key,rowIndex,total,row};
+  document.getElementById("partialItem").textContent = `${row.id} · ${row.item} · 미납 ${total}개`;
+  document.getElementById("partialDate").value = TODAY || new Intl.DateTimeFormat("sv-SE",{timeZone:"Asia/Seoul"}).format(new Date());
+  partialQty.max = String(total-1);
+  partialQty.value = "1";
+  partialError.textContent = "";
+  updatePartialSummary();
+  partialModal.showModal();
+  partialQty.focus();
+  partialQty.select();
+}
+partialQty.addEventListener("input",()=>{partialError.textContent="";updatePartialSummary();});
+partialCancel.addEventListener("click",()=>{if(!partialBusy)partialModal.close();});
+partialModal.addEventListener("cancel",e=>{if(partialBusy)e.preventDefault();});
+partialModal.addEventListener("close",()=>{partialDraft=null;});
+document.getElementById("partialForm").addEventListener("submit", e => {
+  e.preventDefault();
+  if (!IS_OWNER || !partialDraft || partialBusy || !partialModal.open) return;
+  const {key,rowIndex,total,row} = partialDraft;
+  const qty = Number(partialQty.value);
+  if (!Number.isInteger(qty) || qty < 1 || qty >= total) return;
+  if (DATA[key].find(r=>r.rowIndex===rowIndex)!==row || Number(row.qty)!==total || row.status==="완료") {
+    partialError.textContent="수주 내역이 바뀌었어요. 닫고 다시 선택해 주세요.";
+    return;
+  }
+  const setBusy = busy => {
+    partialBusy=busy;partialQty.disabled=busy;partialCancel.disabled=busy;
+    partialSave.textContent=busy?"저장 중…":"부분납품 저장";
+    updatePartialSummary();
+  };
+  partialError.textContent="";
+  setBusy(true);
+  google.script.run.withSuccessHandler(res => {
+    DATA[key] = res.rows; selected[key].clear();
+    setBusy(false);partialModal.close();
+    renderStats();renderTab(key);renderMonthly();
+    showToast(`부분납품 ${qty}개 완료 · 미납 ${total-qty}개`);
+  }).withFailureHandler(err => {
+    setBusy(false);
+    partialError.textContent="저장하지 못했어요. "+(err?.message||"잠시 후 다시 확인해 주세요.");
+  }).partialComplete(key,rowIndex,qty,ADMIN_PW);
+});
 function doBulkComplete(key) {
   const ids = [...selected[key]];
   if (!ids.length) return;
