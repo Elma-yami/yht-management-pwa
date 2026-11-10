@@ -279,6 +279,24 @@
 #yht-guide-dialog details[open] summary{color:var(--steel)}
 #yht-guide-dialog ol{margin:0 0 10px;padding-left:24px}
 #yht-guide-dialog li+li{margin-top:3px}
+.today-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;margin:0 0 9px}
+.today-head h2{margin:0;font-size:17px}.today-caption{font-size:12px;color:var(--sub)}
+.today-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:10px}
+.today-cards .dash-card{color:var(--ink);font:inherit;text-align:left;min-width:0;cursor:pointer}
+.today-cards .dash-card[aria-pressed=true]{border-color:var(--accent);background:var(--accent-soft)}
+.today-cards .dash-card:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.today-cards [data-queue=late] .dash-value{color:var(--danger)}
+.today-cards [data-queue=week] .dash-value{color:var(--wait)}
+.today-cards [data-queue=unpaid] .dash-value{color:var(--steel)}
+.today-queue{margin:0 0 14px}.today-queue .section-head{gap:8px;flex-wrap:wrap}
+.today-table{width:100%;table-layout:fixed;border-collapse:collapse;font-size:13px}
+.today-table th,.today-table td{padding:6px 9px;text-align:left;border-bottom:1px solid var(--line);overflow-wrap:anywhere}
+.today-table th{font-size:12px;color:var(--sub);background:var(--steel-soft)}
+.today-table th:last-child,.today-table td:last-child{text-align:right;font-variant-numeric:tabular-nums}
+.today-month{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
+.today-month>div{padding:9px 12px;overflow-wrap:anywhere}.today-month>div+div{border-left:1px solid var(--line)}
+.today-month strong{display:block;font-size:clamp(12px,2vw,17px);font-variant-numeric:tabular-nums}
+@media(max-width:650px){.today-cards{gap:5px}.today-cards .dash-card{padding:8px 6px}.today-cards .dash-value{font-size:19px}.today-table th,.today-table td{padding:5px 4px;font-size:11px}.today-table .today-group{display:none}.today-table .layout-id{min-height:36px}.today-month>div{padding:7px}}
 </style>
 </head>
 <body>
@@ -710,85 +728,57 @@ function toggleAdminMode() {
   }).withFailureHandler((e) => showToast("오류: " + e.message)).checkAdminPassword(pw);
 }
 
-let DASHBOARD_YEAR = "all";
-
-function setDashboardYear(year) {
-  DASHBOARD_YEAR = year;
-  renderStats();
-}
+let dashboardQueue="late";
 
 function renderStats() {
   saveRecentSnapshot();
-  const allRows = [...DATA.mt, ...DATA.gas];
-  const years = [...new Set(allRows.map(r => String(r.orderDate || "").slice(0, 4)).filter(y => /^\d{4}$/.test(y)))].sort().reverse();
-  if (DASHBOARD_YEAR !== "all" && !years.includes(DASHBOARD_YEAR)) DASHBOARD_YEAR = "all";
-  const inYear = r => DASHBOARD_YEAR === "all" || String(r.orderDate || "").slice(0, 4) === DASHBOARD_YEAR;
-  const mtRows = DATA.mt.filter(inYear);
-  const gasRows = DATA.gas.filter(inYear);
-  const all = [...mtRows, ...gasRows];
-  const done = all.filter(r => r.status === "완료");
-  const unsettled = done.filter(r => r.billing !== "완료");
-  const inprogress = all.filter(r => r.status !== "완료");
-  const totalAmount = all.reduce((s,r)=>s+(Number(r.amount)||0),0);
-  const doneAmount = done.reduce((s,r)=>s+(Number(r.amount)||0),0);
-  const settleAmount = done.filter(r=>r.billing==="완료").reduce((s,r)=>s+(Number(r.amount)||0),0);
-  const stats = document.getElementById("stats");
-  if (stats) stats.innerHTML = `<div class="stat"><div class="label">전체</div><div class="value">${all.length}</div></div><div class="stat"><div class="label">미정산</div><div class="value">${unsettled.length}</div></div>`;
-  renderDashboard({all,done,unsettled,inprogress,totalAmount,doneAmount,settleAmount,mtRows,gasRows,years});
+  renderDashboard();
 }
 
-function renderDashboard(m) {
-  const el = document.getElementById("tab-dashboard");
-  if (!el) return;
-  const recent = [...m.all].sort((a,b)=>String(b.orderDate||"").localeCompare(String(a.orderDate||""))).slice(0,8);
-  const overdue = m.unsettled.filter(isOverdue).length;
-  const amountOf = rows => rows.reduce((s,r)=>s+(Number(r.amount)||0),0);
-  const period = DASHBOARD_YEAR === "all" ? "전체 연도" : `${DASHBOARD_YEAR}년`;
-  const yearOptions = `<option value="all" ${DASHBOARD_YEAR === "all" ? "selected" : ""}>전체 연도</option>` + m.years.map(y => `<option value="${y}" ${DASHBOARD_YEAR === y ? "selected" : ""}>${y}년</option>`).join("");
-  const yearRows = m.years.map(y => {
-    const mt = amountOf(DATA.mt.filter(r => String(r.orderDate || "").slice(0, 4) === y));
-    const gas = amountOf(DATA.gas.filter(r => String(r.orderDate || "").slice(0, 4) === y));
-    return `<tr><td>${y}년</td><td>${won(mt)}</td><td>${won(gas)}</td><td>${won(mt + gas)}</td></tr>`;
-  }).join("");
-  const undatedMt = amountOf(DATA.mt.filter(r => !/^\d{4}$/.test(String(r.orderDate || "").slice(0, 4))));
-  const undatedGas = amountOf(DATA.gas.filter(r => !/^\d{4}$/.test(String(r.orderDate || "").slice(0, 4))));
-  const undatedRow = undatedMt || undatedGas ? `<tr><td>수주일 미입력</td><td>${won(undatedMt)}</td><td>${won(undatedGas)}</td><td>${won(undatedMt + undatedGas)}</td></tr>` : "";
-  el.innerHTML = `
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
-      <label for="dashboardYear" style="font-size:13px;font-weight:700">수주 연도</label>
-      <select id="dashboardYear" onchange="setDashboardYear(this.value)" style="font-size:13px;padding:7px 10px;border:1px solid #D1D5DB;border-radius:7px;background:#fff">${yearOptions}</select>
-      <span style="font-size:12px;color:#6B7280">수주일 기준 · ${period}</span>
-    </div>
-    <div class="dashboard-grid">
-      <div class="dash-card"><div class="dash-label">전체 수주 · ${period}</div><div class="dash-value">${m.all.length}건</div><div class="dash-sub">유지보수 ${m.mtRows.length} · 국소배기 ${m.gasRows.length}</div></div>
-      <div class="dash-card"><div class="dash-label">진행중</div><div class="dash-value">${m.inprogress.length}건</div><div class="dash-sub">아직 납품완료되지 않은 건</div></div>
-      <div class="dash-card"><div class="dash-label">미정산</div><div class="dash-value">${m.unsettled.length}건</div><div class="dash-sub">30일 초과 ${overdue}건</div></div>
-      <div class="dash-card"><div class="dash-label">총 수주금액 · ${period}</div><div class="dash-value" style="font-size:20px">${won(m.totalAmount)}</div><div class="dash-sub">납품완료 ${won(m.doneAmount)} · 정산완료 ${won(m.settleAmount)}</div></div>
-    </div>
-    <div class="section-panel" style="margin-bottom:16px">
-      <div class="section-head">연도별 수주금액</div>
-      <div class="section-body" style="overflow-x:auto">
-        <table class="agg"><thead><tr><th>수주 연도</th><th>유지보수</th><th>국소배기</th><th>합계</th></tr></thead><tbody>${yearRows}${undatedRow || (!yearRows ? '<tr><td colspan="4">데이터 없음</td></tr>' : '')}</tbody></table>
-      </div>
-    </div>
-    <div class="dashboard-cols">
-      <div class="section-panel">
-        <div class="section-head"><span>최근 수주</span><span style="color:#9CA3AF;font-size:11px">최근 8건</span></div>
-        <div class="section-body"><div class="metric-list">${recent.map(r=>`<div class="metric-row"><span><b>${esc(r.id)}</b> · ${esc(r.vud||"거래처 미입력")} · ${esc(r.item||"")}</span><span>${won(r.amount)}</span></div>`).join("") || '<div class="empty">데이터가 없습니다.</div>'}</div></div>
-      </div>
-      <div class="section-panel">
-        <div class="section-head">빠른 작업</div>
-        <div class="section-body">
-          <div class="quick-grid">
-            ${IS_OWNER?`<button class="quick-btn" onclick="openPasteModal('mt')">＋ 유지보수 등록</button><button class="quick-btn" onclick="openPasteModal('gas')">＋ 국소배기 등록</button>`:''}
-            <button class="quick-btn" onclick="switchTab('mt')">🔧 유지보수 목록</button>
-            <button class="quick-btn" onclick="switchTab('gas')">🌬️ 국소배기 목록</button>
-            <button class="quick-btn" onclick="switchTab('monthly')">📊 월별 집계</button>
-            ${IS_OWNER?`<button class="quick-btn" onclick="document.getElementById('importSettlementBtn').click()">📥 정산리스트 반영</button>`:''}
-          </div>
-        </div>
-      </div>
-    </div>`;
+function dashboardData(today) {
+  const all=["mt","gas"].flatMap(key=>DATA[key].map(row=>({key,row})));
+  const validDate=value=>typeof value==="string"&&/^\d{4}-\d{2}-\d{2}$/.test(value)&&Number.isFinite(Date.parse(value))&&new Date(value).toISOString().slice(0,10)===value;
+  const pending=all.filter(({row:r})=>r.status!=="완료");
+  const done=all.filter(({row:r})=>r.status==="완료");
+  const sunday=new Date(today+"T00:00:00Z");
+  sunday.setUTCDate(sunday.getUTCDate()+(7-sunday.getUTCDay())%7);
+  const end=sunday.toISOString().slice(0,10), month=today.slice(0,7);
+  const amount=list=>list.reduce((total,{row:r})=>total+(Number(r.amount)||0),0);
+  const by=field=>(a,b)=>String(a.row[field]||"").localeCompare(String(b.row[field]||""));
+  const monthlyDone=done.filter(({row:r})=>validDate(r.doneDate)&&r.doneDate.startsWith(month)&&r.doneDate<=today);
+  return {end,month,
+    late:pending.filter(({row:r})=>validDate(r.dueDate)&&r.dueDate<today).sort(by("dueDate")),
+    week:pending.filter(({row:r})=>validDate(r.dueDate)&&r.dueDate>=today&&r.dueDate<=end).sort(by("dueDate")),
+    undated:pending.filter(({row:r})=>!validDate(r.dueDate)),
+    unpaid:done.filter(({row:r})=>r.billing!=="완료").sort(by("doneDate")),
+    monthly:[amount(all.filter(({row:r})=>validDate(r.orderDate)&&r.orderDate.startsWith(month)&&r.orderDate<=today)),amount(monthlyDone),amount(monthlyDone.filter(({row:r})=>r.billing==="완료"))],
+    amount};
+}
+
+function setDashboardQueue(key){
+  if(!["late","week","unpaid","undated"].includes(key))return;
+  dashboardQueue=key;renderDashboard();
+  document.querySelector('#tab-dashboard [data-queue="'+key+'"]')?.focus({preventScroll:true});
+}
+
+function renderDashboard() {
+  const el=document.getElementById("tab-dashboard");
+  if(!el)return;
+  const today=new Intl.DateTimeFormat("sv-SE",{timeZone:"Asia/Seoul"}).format(new Date());
+  const d=dashboardData(today);
+  if(dashboardQueue==="undated"&&!d.undated.length)dashboardQueue="late";
+  const labels={late:"납기 지남",week:"이번 주 납품 예정",unpaid:"미정산",undated:"납기 미입력"};
+  const caption={late:"납품예정일이 지난 미납",week:"오늘~"+d.end.slice(5).replace("-","/"),unpaid:"합계 "+won(d.amount(d.unpaid))};
+  const key=dashboardQueue, items=d[key], unpaid=key==="unpaid";
+  const rows=items.map(({key:k,row:r})=>`<tr><td>${orderDetailLink(k,r)}</td><td>${orderValue(r.item)}</td><td class="today-group">${k==="mt"?"유지보수":"국소배기"}</td><td>${orderValue(unpaid?r.doneDate:r.dueDate)}</td><td>${unpaid?(r.amount===""||r.amount==null?"—":won(r.amount)):orderValue(r.qty)+"개"}</td></tr>`).join("");
+  el.innerHTML=`
+    <div class="today-head"><h2>오늘 처리할 일</h2><span class="today-caption">${today} 기준</span></div>
+    <div class="today-cards" aria-label="업무 목록 선택">${["late","week","unpaid"].map(k=>`<button type="button" class="dash-card" data-queue="${k}" aria-pressed="${key===k}" aria-controls="dashboardQueueList" onclick="setDashboardQueue('${k}')"><span class="dash-label">${labels[k]}</span><div class="dash-value">${d[k].length}건</div><span class="dash-sub">${caption[k]}</span></button>`).join("")}</div>
+    ${d.undated.length?`<div style="margin-bottom:10px"><button type="button" class="filter-btn" data-queue="undated" aria-pressed="${key==="undated"}" aria-controls="dashboardQueueList" onclick="setDashboardQueue('undated')">납기 미입력 ${d.undated.length}건</button></div>`:""}
+    <section class="section-panel today-queue" id="dashboardQueueList" aria-labelledby="dashboardQueueTitle"><div class="section-head"><span id="dashboardQueueTitle">${labels[key]}</span><span class="today-caption" role="status">${items.length}건${unpaid?" · "+won(d.amount(items)):""}</span></div>
+    ${items.length?`<table class="today-table"><colgroup><col style="width:17%"><col><col class="today-group" style="width:14%"><col style="width:17%"><col style="width:17%"></colgroup><thead><tr><th>관리번호</th><th>품목</th><th class="today-group">구분</th><th>${unpaid?"납품완료일":"납품예정일"}</th><th>${unpaid?"미정산 금액":"미납 수량"}</th></tr></thead><tbody>${rows}</tbody></table>`:'<div class="empty">해당하는 건이 없어요.</div>'}</section>
+    <div class="today-head"><h2>이번 달 금액</h2><button type="button" class="filter-btn" onclick="switchTab('monthly')">월별집계 보기</button></div>
+    <div class="section-panel today-month">${["수주","납품완료","정산완료"].map((label,n)=>`<div><span class="today-caption">${label}</span><strong>${won(d.monthly[n])}</strong></div>`).join("")}</div>`;
 }
 
 function switchTab(tab) {
@@ -799,7 +789,7 @@ function switchTab(tab) {
   const target=document.getElementById('tab-'+tab); if(target) target.style.display='block';
   const titles={prices:"단가리스트",dashboard:'대시보드',mt:'유지보수 수주관리',gas:'국소배기 수주관리',monthly:'월별 집계'};
   document.title=(titles[tab]||tab)+' · YHT 관리장부';
-  if(tab==='mt') renderTab('mt'); if(tab==='gas') renderTab('gas'); if(tab==='monthly') renderMonthly(); if(tab==='prices') renderPriceList();
+  if(tab==='dashboard') renderDashboard(); if(tab==='mt') renderTab('mt'); if(tab==='gas') renderTab('gas'); if(tab==='monthly') renderMonthly(); if(tab==='prices') renderPriceList();
 }
 
 function visibleRows(key) {
