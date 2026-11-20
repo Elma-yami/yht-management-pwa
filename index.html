@@ -602,9 +602,17 @@ function isOverdue(r) {
 function isPending(r) {
   return r.status === "완료" && r.billing !== "완료" && !isOverdue(r);
 }
-function orderMonthKey(r) {
-  const d = r.orderDate || "";
-  return d ? d.slice(0,7) : "미정";
+function orderListDate(key,r) {
+  return String((tabState[key].filterMode==="done"?r.doneDate:r.orderDate)||"");
+}
+function orderMonthKey(r,key) {
+  const d=orderListDate(key,r);
+  return /^\d{4}-\d{2}-\d{2}$/.test(d)?d.slice(0,7):"미정";
+}
+function compareOrderDates(key,a,b){
+  const ma=orderMonthKey(a,key),mb=orderMonthKey(b,key);
+  if(ma==="미정"||mb==="미정")return ma===mb?0:ma==="미정"?1:-1;
+  return orderListDate(key,b).localeCompare(orderListDate(key,a));
 }
 function monthLabel(k) {
   return k === "미정" ? "날짜 미정" : `${k.slice(0,4)}년 ${parseInt(k.slice(5,7),10)}월`;
@@ -806,7 +814,7 @@ function visibleRows(key) {
     const q = st.search.toLowerCase();
     r = r.filter(x => [x.id,x.item,x.owner,x.vud].some(v => String(v||"").toLowerCase().includes(q)));
   }
-  if (st.year !== "전체") r = r.filter(x=>String(x.orderDate||"").startsWith(st.year+"-"));
+  if (st.year !== "전체") r = r.filter(x=>orderListDate(key,x).startsWith(st.year+"-"));
   if (st.filterMode === "inprogress") r = r.filter(x => x.status !== "완료");
   if (st.filterMode === "done") r = r.filter(x => x.status === "완료");
   if (st.filterMode === "unsettled") r = r.filter(x => x.status === "완료" && x.billing !== "완료");
@@ -816,16 +824,16 @@ function visibleRows(key) {
 
 function filteredOrders(key, rows=visibleRows(key)) {
   const m=tabState[key].month;
-  return m==="전체"?rows:rows.filter(r=>orderMonthKey(r)===m);
+  return m==="전체"?rows:rows.filter(r=>orderMonthKey(r,key)===m);
 }
 function orderYearHtml(key) {
-  const current=tabState[key].year, years=[...new Set(DATA[key].map(r=>String(r.orderDate||"").slice(0,4)).filter(y=>/^\d{4}$/.test(y)))].sort().reverse();
-  return `<label>수주 연도<select onchange="setOrderYear('${key}',this.value)"><option value="전체">전체 연도</option>${years.map(y=>`<option value="${y}" ${y===current?"selected":""}>${y}년</option>`).join("")}</select></label>`;
+  const current=tabState[key].year, years=[...new Set(DATA[key].filter(r=>tabState[key].filterMode!=="done"||r.status==="완료").map(r=>orderListDate(key,r).slice(0,4)).filter(y=>/^\d{4}$/.test(y)))].sort().reverse();
+  return `<label>${tabState[key].filterMode==="done"?"납품 연도":"수주 연도"}<select onchange="setOrderYear('${key}',this.value)"><option value="전체">전체 연도</option>${years.map(y=>`<option value="${y}" ${y===current?"selected":""}>${y}년</option>`).join("")}</select></label>`;
 }
 function setOrderYear(key,year){const st=tabState[key];st.year=year;st.month="전체";st.page=1;renderTab(key);}
 function monthSelectHtml(key, rowsForCount) {
   const groups = {};
-  rowsForCount.forEach(r => { const k = orderMonthKey(r); groups[k] = (groups[k]||0)+1; });
+  rowsForCount.forEach(r => { const k = orderMonthKey(r,key); groups[k] = (groups[k]||0)+1; });
   const keys = Object.keys(groups).sort().reverse();
   const st = tabState[key];
   let opts = `<option value="전체" ${st.month==="전체"?"selected":""}>전체 (${rowsForCount.length}건)</option>`;
@@ -834,7 +842,7 @@ function monthSelectHtml(key, rowsForCount) {
 }
 
 function setMonth(key, v) { tabState[key].month = v; tabState[key].page=1;  renderTab(key); }
-function setFilter(key, v) { tabState[key].filterMode = v; tabState[key].page=1;  renderTab(key); }
+function setFilter(key, v) { const st=tabState[key];if((st.filterMode==="done")!==(v==="done")){st.year="전체";st.month="전체";}st.filterMode=v;st.page=1;renderTab(key); }
 function startOrderSearch(key,input){}
 function handleOrderSearch(key,input,event){if(input.isConnected)setSearch(key,input.value);}
 function finishOrderSearch(key,input){if(input.isConnected)setSearch(key,input.value);}
@@ -975,12 +983,12 @@ function renderTab(key, searchOnly = false) {
   const filtered = filteredOrders(key,allVisible);
   const groups = {};
   const monthCounts={};
-  filtered.forEach(r=>{const k=orderMonthKey(r);monthCounts[k]=(monthCounts[k]||0)+1;});
-  const ordered=filtered.slice().sort((a,b)=>orderMonthKey(b).localeCompare(orderMonthKey(a)));
+  filtered.forEach(r=>{const k=orderMonthKey(r,key);monthCounts[k]=(monthCounts[k]||0)+1;});
+  const ordered=filtered.slice().sort((a,b)=>compareOrderDates(key,a,b));
   const pagination=paginateOrders(ordered,st.pageSize,st.page);
   st.page=pagination.page;
-  pagination.rows.forEach(r => { const k = orderMonthKey(r); (groups[k] = groups[k]||[]).push(r); });
-  const keys = Object.keys(groups).sort().reverse();
+  pagination.rows.forEach(r => { const k = orderMonthKey(r,key); (groups[k] = groups[k]||[]).push(r); });
+  const keys = Object.keys(groups).sort((a,b)=>a==="미정"?1:b==="미정"?-1:b.localeCompare(a));
   const body = keys.map(k => `<div class="month-header">${monthLabel(k)} (${monthCounts[k]}건)</div>` + orderTableHtml(key,groups[k])).join("");
 
   const filters = [["all","전체"],["inprogress","진행중만"],["done","납품완료만"],["unsettled","미정산만"],["settled","정산완료만"]];
@@ -1012,7 +1020,7 @@ function renderTab(key, searchOnly = false) {
         <div class="layout-filter-row">
           <label class="layout-search">수주 검색<input type="text" placeholder="🔍 관리번호 / 품목 / 담당자 검색" value="${esc(st.search)}" oncompositionstart="startOrderSearch('${key}',this)" oncompositionend="finishOrderSearch('${key}', this)" oninput="handleOrderSearch('${key}', this, event)"></label>
           ${orderYearHtml(key)}
-          <label>수주 월${monthSelectHtml(key, allVisible)}</label>
+          <label>${st.filterMode==="done"?"납품 월":"수주 월"}${monthSelectHtml(key, allVisible)}</label>
           <label>표시 건수<select class="order-page-size" aria-label="수주목록 표시 건수" onchange="setOrderPageSize('${key}',this.value==='all'?'all':Number(this.value))">${[10,30,50,100,"all"].map(size=>`<option value="${size}" ${st.pageSize===size?'selected':''}>${size==="all"?"전체 보기":size+"건 보기"}</option>`).join('')}</select></label>
         </div>
         <div class="filters">${filterHtml}</div>
