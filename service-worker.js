@@ -1,4 +1,4 @@
-const CACHE_NAME = 'yht-pwa-shell-v33-completed-delivery-dates';
+const CACHE_NAME = 'yht-pwa-shell-v34-delivery-date-grouping';
 const APP_FILES = ['/', '/index.html', '/manifest.json', '/icons/icon-192.png', '/icons/icon-512.png'];
 
 self.addEventListener('install', event => {
