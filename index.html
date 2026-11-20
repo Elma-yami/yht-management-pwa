@@ -297,6 +297,13 @@
 .today-month>div{padding:9px 12px;overflow-wrap:anywhere}.today-month>div+div{border-left:1px solid var(--line)}
 .today-month strong{display:block;font-size:clamp(12px,2vw,17px);font-variant-numeric:tabular-nums}
 @media(max-width:650px){.today-cards{gap:5px}.today-cards .dash-card{padding:8px 6px}.today-cards .dash-value{font-size:19px}.today-table th,.today-table td{padding:5px 4px;font-size:11px}.today-table .today-group{display:none}.today-table .layout-id{min-height:36px}.today-month>div{padding:7px}}
+.layout-main .orders-table.has-delivery-date td:nth-child(7){text-align:right}
+.layout-main .orders-table.has-delivery-date td:nth-child(8){text-align:right}
+.layout-main .orders-table.has-delivery-date td:nth-child(9){text-align:left}
+.layout-main .orders-table.has-delivery-date td:nth-child(3){font-weight:400;letter-spacing:normal;line-height:inherit}
+.layout-main .orders-table.has-delivery-date .layout-item{line-height:1.35;text-align:left}
+.delivery-date{font-variant-numeric:tabular-nums}
+.order-mobile-delivery{font-size:12px;color:var(--steel);font-weight:700;margin-bottom:4px}
 </style>
 </head>
 <body>
@@ -873,9 +880,10 @@ function showOrderDetail(key,rowIndex){
 function orderTableHtml(key,rows){
  const all=rows.length>0&&rows.every(r=>selected[key].has(r.rowIndex));
  const ids=rows.map(r=>r.rowIndex);
- const headers=['관리번호','품목','상태','수주일','수량','금액','담당자'];
- const widths=[3,12,34,11,11,6,13,10];
- return `<div class="orders-desktop"><table class="orders-table" aria-label="수주목록"><colgroup>${widths.map(w=>`<col style="width:${w}%">`).join('')}</colgroup><thead><tr><th aria-label="선택">${IS_OWNER?`<input type="checkbox" aria-label="이 월 전체 선택" ${all?'checked':''} onchange="toggleOrderMonth('${key}',[${ids}],this.checked)">`:''}</th>${headers.map(h=>`<th scope="col">${h}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr class="${orderRowClass(key,r)}"><td>${orderCheckbox(key,r)}</td><td>${orderDetailLink(key,r)}</td><td class="layout-item">${orderValue(r.item)}</td><td>${orderStatus(r)}</td><td>${orderValue(r.orderDate)}</td><td class="order-number">${orderValue(r.qty)}</td><td class="order-number">${orderMoney(r.amount)}</td><td>${orderValue(r.owner)}</td></tr>`).join('')}</tbody></table></div><div class="orders-mobile">${rows.map(r=>`<div class="order-mobile-row ${orderRowClass(key,r)}"><div class="order-mobile-head">${orderCheckbox(key,r)}${orderDetailLink(key,r)}<div style="margin-left:auto;text-align:right">${orderStatus(r)}</div></div><div class="layout-mobile-item">${orderValue(r.item)}</div><div class="order-mobile-meta"><span>${orderValue(r.orderDate)} · ${orderValue(r.owner)}</span><b>${orderValue(r.qty)}개 · ${r.amount===""||r.amount==null?"—":won(r.amount)}</b></div></div>`).join('')}</div>`;
+ const showDeliveryDate=tabState[key].filterMode==="done";
+ const headers=[...(showDeliveryDate?['납품일']:[]),'관리번호','품목','상태','수주일','수량','금액','담당자'];
+ const widths=showDeliveryDate?[3,10,11,27,9,10,6,13,10]:[3,12,34,11,11,6,13,10];
+ return `<div class="orders-desktop"><table class="orders-table ${showDeliveryDate?'has-delivery-date':''}" aria-label="수주목록"><colgroup>${widths.map(w=>`<col style="width:${w}%">`).join('')}</colgroup><thead><tr><th aria-label="선택">${IS_OWNER?`<input type="checkbox" aria-label="이 월 전체 선택" ${all?'checked':''} onchange="toggleOrderMonth('${key}',[${ids}],this.checked)">`:''}</th>${headers.map(h=>`<th scope="col">${h}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr class="${orderRowClass(key,r)}"><td>${orderCheckbox(key,r)}</td>${showDeliveryDate?`<td class="delivery-date">${orderValue(r.doneDate)}</td>`:""}<td>${orderDetailLink(key,r)}</td><td class="layout-item">${orderValue(r.item)}</td><td>${orderStatus(r)}</td><td>${orderValue(r.orderDate)}</td><td class="order-number">${orderValue(r.qty)}</td><td class="order-number">${orderMoney(r.amount)}</td><td>${orderValue(r.owner)}</td></tr>`).join('')}</tbody></table></div><div class="orders-mobile">${rows.map(r=>`<div class="order-mobile-row ${orderRowClass(key,r)}">${showDeliveryDate?`<div class="order-mobile-delivery">납품일 ${orderValue(r.doneDate)}</div>`:""}<div class="order-mobile-head">${orderCheckbox(key,r)}${orderDetailLink(key,r)}<div style="margin-left:auto;text-align:right">${orderStatus(r)}</div></div><div class="layout-mobile-item">${orderValue(r.item)}</div><div class="order-mobile-meta"><span>${orderValue(r.orderDate)} · ${orderValue(r.owner)}</span><b>${orderValue(r.qty)}개 · ${r.amount===""||r.amount==null?"—":won(r.amount)}</b></div></div>`).join('')}</div>`;
 }
 function toggleOrderMonth(key,ids,checked){
  if(!IS_OWNER)return;
